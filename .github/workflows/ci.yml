@@ -1,0 +1,18 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+      # The harness gates itself: run the offline persona and compare against
+      # the committed baseline. A change that regresses the pipeline fails CI.
+      - run: python -m soundcheck.cli run --persona personas/appointment_booking.yaml --offline --out report.json
+      - run: python -m soundcheck.cli gate --baseline baselines/appointment_booking.json --report report.json

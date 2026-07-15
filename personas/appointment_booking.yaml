@@ -1,0 +1,10 @@
+name: appointment_booking
+goal: Book a dental appointment for next Tuesday morning
+opening: "Hi, I'd like to book an appointment."
+turns:
+  - say: "Do you have anything next Tuesday morning?"
+  - say: "Actually, wait - how much does a cleaning cost?"
+    behavior: offtopic
+  - say: "Okay, Tuesday 10am works. My name is Ricky."
+success_criteria:
+  any_agent_reply_contains: ["booked", "confirmed", "scheduled"]
