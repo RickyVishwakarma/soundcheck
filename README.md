@@ -31,7 +31,7 @@ is implemented — same personas, same metrics, real WebSocket.
 ## Quickstart (no API keys)
 
 ```bash
-pip install "soundcheck[live] @ git+https://github.com/RickyVishwakarma/soundtrack-.git"
+pip install "soundcheck[live] @ git+https://github.com/RickyVishwakarma/soundcheck.git"
 
 # Run a simulated caller against the built-in mock agent
 soundcheck run --persona personas/appointment_booking.yaml --offline --out report.json
@@ -49,7 +49,7 @@ One step in your workflow: run a persona, gate the build, and — on pull
 requests — comment the reliability delta:
 
 ```yaml
-- uses: RickyVishwakarma/soundtrack-@master
+- uses: RickyVishwakarma/soundcheck@master
   with:
     persona: personas/impatient_refund.yaml
     baseline: baselines/impatient_refund.json

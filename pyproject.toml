@@ -21,7 +21,7 @@ dev = ["pytest>=8.0"]
 soundcheck = "soundcheck.cli:main"
 
 [project.urls]
-Repository = "https://github.com/RickyVishwakarma/soundtrack-"
+Repository = "https://github.com/RickyVishwakarma/soundcheck"
 
 [tool.setuptools]
 packages = ["soundcheck"]
