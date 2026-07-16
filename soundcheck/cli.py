@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from . import gate as gate_mod
+from . import report as report_mod
 from . import runner
 from .personas import load_persona
 from .session import ElevenLabsTransport, MockAgentTransport
@@ -33,6 +34,18 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_diff(args: argparse.Namespace) -> int:
+    baseline = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
+    report = json.loads(Path(args.report).read_text(encoding="utf-8"))
+    md = report_mod.markdown_delta(baseline, report, tolerance=args.tolerance)
+    if args.out:
+        Path(args.out).write_text(md, encoding="utf-8")
+        print(f"delta -> {args.out}")
+    else:
+        print(md)
+    return 0
+
+
 def _cmd_gate(args: argparse.Namespace) -> int:
     baseline = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
     report = json.loads(Path(args.report).read_text(encoding="utf-8"))
@@ -47,6 +60,10 @@ def _cmd_gate(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Windows consoles default to legacy code pages that can't print the
+    # delta table's marks; reports and comments are UTF-8 everywhere.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(prog="soundcheck")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -63,6 +80,13 @@ def main(argv: list[str] | None = None) -> int:
     p_gate.add_argument("--report", required=True)
     p_gate.add_argument("--tolerance", type=float, default=gate_mod.LATENCY_TOLERANCE)
     p_gate.set_defaults(func=_cmd_gate)
+
+    p_diff = sub.add_parser("diff", help="render the baseline-vs-report delta as markdown")
+    p_diff.add_argument("--baseline", required=True)
+    p_diff.add_argument("--report", required=True)
+    p_diff.add_argument("--tolerance", type=float, default=gate_mod.LATENCY_TOLERANCE)
+    p_diff.add_argument("--out", default="", help="write to a file instead of stdout")
+    p_diff.set_defaults(func=_cmd_diff)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -1,0 +1,71 @@
+name: "SoundCheck — voice agent reliability gate"
+description: >-
+  Run a simulated caller against your voice agent, fail the build when
+  latency / interruption-recovery / goal completion regress, and comment
+  the delta on the pull request.
+branding:
+  icon: "mic"
+  color: "purple"
+
+inputs:
+  persona:
+    description: "Path to the caller persona YAML to run"
+    required: true
+  baseline:
+    description: "Path to the committed baseline JSON to gate against"
+    required: true
+  offline:
+    description: "Run against the built-in deterministic mock agent (no API keys)"
+    default: "true"
+  agent-id:
+    description: "ElevenLabs agent id (live mode; needs ELEVENLABS_API_KEY in env)"
+    default: ""
+  github-token:
+    description: "Token used to post the PR comment"
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install SoundCheck
+      shell: bash
+      run: pip install --quiet "${{ github.action_path }}"
+
+    - name: Run persona, render delta, gate
+      id: gate
+      shell: bash
+      run: |
+        FLAGS=""
+        if [ "${{ inputs.offline }}" = "true" ]; then FLAGS="--offline"; fi
+        python -m soundcheck.cli run --persona "${{ inputs.persona }}" $FLAGS \
+          --agent-id "${{ inputs.agent-id }}" --out soundcheck-report.json
+        python -m soundcheck.cli diff --baseline "${{ inputs.baseline }}" \
+          --report soundcheck-report.json --out soundcheck-comment.md
+        if python -m soundcheck.cli gate --baseline "${{ inputs.baseline }}" \
+          --report soundcheck-report.json; then
+          echo "verdict=pass" >> "$GITHUB_OUTPUT"
+        else
+          echo "verdict=fail" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Comment the delta on the PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const body = fs.readFileSync('soundcheck-comment.md', 'utf8');
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body,
+          });
+
+    - name: Fail on regression
+      if: steps.gate.outputs.verdict == 'fail'
+      shell: bash
+      run: |
+        echo "SoundCheck gate failed — the delta table above shows what regressed."
+        exit 1

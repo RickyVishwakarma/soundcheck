@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soundcheck"
+version = "0.2.0"
+description = "CI-native reliability gate for voice agents: simulated callers, latency/interruption metrics, and a regression gate that fails your build."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ricky Vishwakarma" }]
+keywords = ["voice-agents", "testing", "ci", "elevenlabs", "reliability", "evals"]
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+live = ["websocket-client>=1.7"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+soundcheck = "soundcheck.cli:main"
+
+[project.urls]
+Repository = "https://github.com/RickyVishwakarma/soundtrack-"
+
+[tool.setuptools]
+packages = ["soundcheck"]

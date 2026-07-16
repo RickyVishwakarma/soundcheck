@@ -23,22 +23,51 @@ is implemented — same personas, same metrics, real WebSocket.
 - [x] Live transport: ElevenLabs Agents (WebSocket, TTFA from first audio event)
 - [x] Interruption injection: barge-in mid-reply + `recovery_ms` (how long the
       agent keeps talking over you) — measured, baselined, and gated
-- [ ] GitHub Action that comments the reliability delta on your PR
+- [x] `pip install`-able package with a `soundcheck` console command
+- [x] GitHub Action that gates the build and comments the reliability delta on your PR
 - [ ] Static HTML regression report (shareable, CI-artifact friendly)
 - [ ] LLM-driven personas and LLM-judge evals (roadmap; the gate stays deterministic)
 
 ## Quickstart (no API keys)
 
 ```bash
-python -m venv .venv && . .venv/Scripts/activate   # Windows
-pip install -r requirements.txt
+pip install "soundcheck[live] @ git+https://github.com/RickyVishwakarma/soundtrack-.git"
 
 # Run a simulated caller against the built-in mock agent
-python -m soundcheck.cli run --persona personas/appointment_booking.yaml --offline --out report.json
+soundcheck run --persona personas/appointment_booking.yaml --offline --out report.json
 
 # Gate: compare against the committed baseline; non-zero exit on regression
-python -m soundcheck.cli gate --baseline baselines/appointment_booking.json --report report.json
+soundcheck gate --baseline baselines/appointment_booking.json --report report.json
+
+# Render the delta as markdown (what the GitHub Action posts on your PR)
+soundcheck diff --baseline baselines/appointment_booking.json --report report.json
 ```
+
+## Use it as a GitHub Action
+
+One step in your workflow: run a persona, gate the build, and — on pull
+requests — comment the reliability delta:
+
+```yaml
+- uses: RickyVishwakarma/soundtrack-@master
+  with:
+    persona: personas/impatient_refund.yaml
+    baseline: baselines/impatient_refund.json
+```
+
+What the PR comment looks like when a change makes the agent slower to shut
+up after a barge-in:
+
+| Metric | Baseline | This run | Δ | |
+|---|---:|---:|---:|:--:|
+| ttfa_ms_p95 | 401.8 | 309.3 | -23% | ✅ |
+| turn_ms_p95 | 1560.3 | 1693.1 | +9% | ✅ |
+| recovery_ms_p95 | 327.7 | 416.0 | +27% | ❌ |
+| goal_completed | True | True | — | ✅ |
+
+**GATE FAILED** — `recovery_ms_p95` regressed: 327.7 → 416.0 ms (+27%, tolerance +20%)
+
+This repo's own CI runs the Action on itself — the harness gates the harness.
 
 With `ELEVENLABS_API_KEY` and an agent id set, the same personas run against a real
 ElevenLabs agent over WebSocket — one pipeline, two transports, so results are

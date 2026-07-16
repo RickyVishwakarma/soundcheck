@@ -10,11 +10,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r requirements.txt
+      - run: pip install -e ".[dev]"
       - run: pytest -q
-      # The harness gates itself: run the offline persona and compare against
-      # the committed baseline. A change that regresses the pipeline fails CI.
-      - run: python -m soundcheck.cli run --persona personas/appointment_booking.yaml --offline --out report.json
-      - run: python -m soundcheck.cli gate --baseline baselines/appointment_booking.json --report report.json
-      - run: python -m soundcheck.cli run --persona personas/impatient_refund.yaml --offline --out refund.json
-      - run: python -m soundcheck.cli gate --baseline baselines/impatient_refund.json --report refund.json
+      # The harness gates itself — through its own published Action, so the
+      # thing we tell strangers to use is the thing that protects this repo.
+      # On pull requests the Action also comments the reliability delta.
+      - uses: ./
+        with:
+          persona: personas/appointment_booking.yaml
+          baseline: baselines/appointment_booking.json
+      - uses: ./
+        with:
+          persona: personas/impatient_refund.yaml
+          baseline: baselines/impatient_refund.json
