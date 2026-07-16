@@ -1,2 +1,4 @@
 pyyaml>=6.0
 pytest>=8.0
+# Optional: only needed for the live ElevenLabs transport (offline mode has no deps).
+websocket-client>=1.7
