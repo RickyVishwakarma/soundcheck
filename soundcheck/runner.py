@@ -9,6 +9,10 @@ from .personas import Persona
 from .session import AgentTransport
 
 
+# How long the caller lets the agent talk before barging in on `interrupt` turns.
+BARGE_IN_AFTER_MS = 400.0
+
+
 def run(persona: Persona, transport: AgentTransport) -> dict:
     transport.start()
     try:
@@ -16,7 +20,8 @@ def run(persona: Persona, transport: AgentTransport) -> dict:
         utterances = [persona.opening] + [t.say for t in persona.turns]
         behaviors = [None] + [t.behavior for t in persona.turns]
         for utterance, behavior in zip(utterances, behaviors):
-            reply = transport.send(utterance)
+            barge = BARGE_IN_AFTER_MS if behavior == "interrupt" else None
+            reply = transport.send(utterance, barge_in_after_ms=barge)
             turns.append(
                 {
                     "user": utterance,
@@ -24,6 +29,7 @@ def run(persona: Persona, transport: AgentTransport) -> dict:
                     "agent": reply.text,
                     "ttfa_ms": reply.ttfa_ms,
                     "total_ms": reply.total_ms,
+                    "recovery_ms": reply.recovery_ms,
                 }
             )
     finally:

@@ -12,18 +12,20 @@ LLM judge, and **fails your CI build when an agent config change regresses**.
 
 ## Status
 
-Week-1 slice under active development. The offline pipeline (mock agent → scripted
-personas → metrics → regression gate) runs end-to-end with **zero API keys**; the
-live ElevenLabs Agents transport is the current work-in-progress.
+The offline pipeline (mock agent → scripted personas → metrics → regression gate)
+runs end-to-end with **zero API keys**, and the live ElevenLabs Agents transport
+is implemented — same personas, same metrics, real WebSocket.
 
 - [x] Scripted caller personas (YAML)
 - [x] Metrics: TTFA, turn latency percentiles, goal completion
 - [x] Regression gate with committed baselines (CI-ready, exit codes)
 - [x] Deterministic offline mode — full pipeline with no external services
-- [ ] Live transport: ElevenLabs Agents (WebSocket, real audio timing)
-- [ ] LLM-driven adversarial personas (interrupt, mumble, switch language)
-- [ ] LLM-judge transcript evals (faithfulness, task success) with local fallback
-- [ ] Next.js dashboard: trace trees, latency waterfalls, regression diffs
+- [x] Live transport: ElevenLabs Agents (WebSocket, TTFA from first audio event)
+- [x] Interruption injection: barge-in mid-reply + `recovery_ms` (how long the
+      agent keeps talking over you) — measured, baselined, and gated
+- [ ] GitHub Action that comments the reliability delta on your PR
+- [ ] Static HTML regression report (shareable, CI-artifact friendly)
+- [ ] LLM-driven personas and LLM-judge evals (roadmap; the gate stays deterministic)
 
 ## Quickstart (no API keys)
 

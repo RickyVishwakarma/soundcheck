@@ -19,12 +19,19 @@ class AgentReply:
     text: str
     ttfa_ms: float   # time to first audio/token from end of user utterance
     total_ms: float  # full reply duration
+    # Barge-in recovery: how long the agent kept talking after the caller
+    # interrupted mid-reply. None when the turn had no interruption.
+    recovery_ms: Optional[float] = None
 
 
 class AgentTransport(Protocol):
     def start(self) -> None: ...
-    def send(self, utterance: str) -> AgentReply: ...
+    def send(self, utterance: str, *, barge_in_after_ms: Optional[float] = None) -> AgentReply: ...
     def close(self) -> None: ...
+
+
+# What the simulated caller says when barging in mid-reply.
+BARGE_IN_TEXT = "Sorry — hold on, one second."
 
 
 class MockAgentTransport:
@@ -42,7 +49,7 @@ class MockAgentTransport:
     def start(self) -> None:
         pass
 
-    def send(self, utterance: str) -> AgentReply:
+    def send(self, utterance: str, *, barge_in_after_ms: Optional[float] = None) -> AgentReply:
         lowered = utterance.lower()
         if any(w in lowered for w in ("book", "appointment", "schedule")):
             text = "I can help with that. What day works for you?"
@@ -50,11 +57,21 @@ class MockAgentTransport:
             text = "You're booked for Tuesday at 10am — confirmed."
         elif any(w in lowered for w in ("cost", "price", "how much")):
             text = "A standard cleaning is 1500 rupees."
+        elif any(w in lowered for w in ("refund", "money back", "cancel")):
+            text = "I understand. I can process that refund for you right now."
         else:
             text = "Could you tell me a bit more so I can help?"
         ttfa = self._rng.uniform(180, 420)
         total = ttfa + self._rng.uniform(600, 1800)
-        return AgentReply(text=text, ttfa_ms=round(ttfa, 1), total_ms=round(total, 1))
+        recovery = None
+        if barge_in_after_ms is not None:
+            # A well-behaved agent stops quickly after a barge-in; the mock's
+            # recovery time is seeded like its latencies so runs stay identical.
+            recovery = round(self._rng.uniform(150, 500), 1)
+            total = round(barge_in_after_ms + recovery + self._rng.uniform(200, 600), 1)
+        return AgentReply(
+            text=text, ttfa_ms=round(ttfa, 1), total_ms=round(total, 1), recovery_ms=recovery
+        )
 
     def close(self) -> None:
         pass
@@ -121,11 +138,19 @@ class ElevenLabsTransport:
                 return
         raise TimeoutError("ElevenLabs agent did not initiate the conversation in time")
 
-    def send(self, utterance: str) -> AgentReply:
+    def send(self, utterance: str, *, barge_in_after_ms: Optional[float] = None) -> AgentReply:
         if self._ws is None:
             raise RuntimeError("transport not started; call start() first")
         self._ws.send(json.dumps({"type": "user_message", "text": utterance}))
-        return self._consume_turn(self._recv, self._send_pong, _now_ms)
+        return self._consume_turn(
+            self._recv,
+            self._send_pong,
+            _now_ms,
+            barge_in_after_ms=barge_in_after_ms,
+            barge_in=lambda: self._ws.send(
+                json.dumps({"type": "user_message", "text": BARGE_IN_TEXT})
+            ),
+        )
 
     def close(self) -> None:
         if self._ws is not None:
@@ -141,21 +166,40 @@ class ElevenLabsTransport:
         recv: Callable[[], Optional[dict]],
         on_ping: Callable[[Optional[int]], None],
         now_ms: Callable[[], float],
+        *,
+        barge_in_after_ms: Optional[float] = None,
+        barge_in: Optional[Callable[[], None]] = None,
     ) -> AgentReply:
         """Fold a stream of server frames into one timed AgentReply.
 
         `recv` returns a parsed frame, or None when the read idled out (which,
         once audio has started, is how we detect the turn ended). Kept free of
         socket/JSON concerns so it can be driven by a scripted list in tests.
+
+        If `barge_in_after_ms` is set, `barge_in()` fires once the agent has
+        been speaking that long; recovery_ms is then how much longer agent
+        audio kept arriving — the number a caller experiences as "it wouldn't
+        stop talking over me".
         """
         t0 = now_ms()
         ttfa_ms: Optional[float] = None
         last_audio_ms: Optional[float] = None
+        barged_at_ms: Optional[float] = None
         text_parts: list[str] = []
 
         while True:
             frame = recv()
             now = now_ms()
+
+            if (
+                barge_in_after_ms is not None
+                and barge_in is not None
+                and barged_at_ms is None
+                and ttfa_ms is not None
+                and now - (t0 + ttfa_ms) >= barge_in_after_ms
+            ):
+                barge_in()
+                barged_at_ms = now
 
             if frame is None:
                 if last_audio_ms is not None:
@@ -177,13 +221,20 @@ class ElevenLabsTransport:
                     text_parts.append(text)
             elif ftype == "ping":
                 on_ping(frame.get("ping_event", {}).get("event_id"))
-            # interruption / user_transcript / metadata frames: not turn-ending
+            elif ftype == "interruption" and barged_at_ms is not None:
+                break  # server confirmed the barge-in cut the agent off
+            # user_transcript / metadata frames: not turn-ending
 
         total_ms = (last_audio_ms - t0) if last_audio_ms is not None else (now_ms() - t0)
+        recovery_ms: Optional[float] = None
+        if barged_at_ms is not None:
+            # Audio that kept arriving after the interruption; 0 if it stopped dead.
+            recovery_ms = round(max((last_audio_ms or barged_at_ms) - barged_at_ms, 0.0), 1)
         return AgentReply(
             text=" ".join(text_parts) or "(no agent text)",
             ttfa_ms=round(ttfa_ms or 0.0, 1),
             total_ms=round(total_ms, 1),
+            recovery_ms=recovery_ms,
         )
 
     # --- socket glue ----------------------------------------------------------

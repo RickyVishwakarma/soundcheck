@@ -16,3 +16,5 @@ jobs:
       # the committed baseline. A change that regresses the pipeline fails CI.
       - run: python -m soundcheck.cli run --persona personas/appointment_booking.yaml --offline --out report.json
       - run: python -m soundcheck.cli gate --baseline baselines/appointment_booking.json --report report.json
+      - run: python -m soundcheck.cli run --persona personas/impatient_refund.yaml --offline --out refund.json
+      - run: python -m soundcheck.cli gate --baseline baselines/impatient_refund.json --report refund.json

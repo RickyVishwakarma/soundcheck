@@ -1,0 +1,11 @@
+name: impatient_refund
+goal: Get a refund for a cancelled service, while talking over the agent
+opening: "Hi, I need a refund for the appointment you cancelled on me."
+turns:
+  - say: "No listen, I don't want to rebook - I want my money back."
+    behavior: interrupt
+  - say: "How long until it reaches my account?"
+  - say: "Fine. Please process the refund."
+    behavior: interrupt
+success_criteria:
+  any_agent_reply_contains: ["refund"]

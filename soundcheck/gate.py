@@ -9,7 +9,13 @@ from __future__ import annotations
 
 # Max allowed relative increase on latency percentile metrics (0.20 == +20%).
 LATENCY_TOLERANCE = 0.20
-LATENCY_KEYS = ("ttfa_ms_p50", "ttfa_ms_p95", "turn_ms_p50", "turn_ms_p95")
+LATENCY_KEYS = (
+    "ttfa_ms_p50",
+    "ttfa_ms_p95",
+    "turn_ms_p50",
+    "turn_ms_p95",
+    "recovery_ms_p95",
+)
 
 
 def compare(baseline: dict, report: dict, tolerance: float = LATENCY_TOLERANCE) -> list[str]:

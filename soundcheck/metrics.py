@@ -24,6 +24,9 @@ def _pct(values: list[float], pct: float) -> float:
 def compute(turns: list[dict], success_any: list[str]) -> dict:
     ttfas = [t["ttfa_ms"] for t in turns]
     totals = [t["total_ms"] for t in turns]
+    # Barge-in recovery only exists on interrupted turns; how fast the agent
+    # shuts up when talked over is a metric text-based evals cannot produce.
+    recoveries = [t["recovery_ms"] for t in turns if t.get("recovery_ms") is not None]
     replies = " ".join(t["agent"].lower() for t in turns)
     return {
         "turn_count": len(turns),
@@ -31,5 +34,6 @@ def compute(turns: list[dict], success_any: list[str]) -> dict:
         "ttfa_ms_p95": _pct(ttfas, 95),
         "turn_ms_p50": _pct(totals, 50),
         "turn_ms_p95": _pct(totals, 95),
+        "recovery_ms_p95": _pct(recoveries, 95) if recoveries else None,
         "goal_completed": any(s in replies for s in success_any) if success_any else None,
     }
