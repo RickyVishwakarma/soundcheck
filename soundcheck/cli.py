@@ -46,6 +46,29 @@ def _cmd_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_html(args: argparse.Namespace) -> int:
+    baseline = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
+    report = json.loads(Path(args.report).read_text(encoding="utf-8"))
+    failures = gate_mod.compare(baseline, report, tolerance=args.tolerance)
+    payload = {
+        "baseline": baseline,
+        "report": report,
+        "failures": failures,
+        "tolerance": args.tolerance,
+    }
+    template_path = Path(__file__).parent / "assets" / "report_template.html"
+    template = template_path.read_text(encoding="utf-8")
+    marker = "window.__SOUNDCHECK_DATA__ = null; /*SOUNDCHECK_DATA*/"
+    if marker not in template:
+        raise RuntimeError(f"data placeholder missing from {template_path}")
+    # `</` would end the inline <script> early if a transcript contained it.
+    blob = json.dumps(payload).replace("</", "<\\/")
+    html = template.replace(marker, f"window.__SOUNDCHECK_DATA__ = {blob};", 1)
+    Path(args.out).write_text(html, encoding="utf-8")
+    print(f"html report -> {args.out}")
+    return 0
+
+
 def _cmd_gate(args: argparse.Namespace) -> int:
     baseline = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
     report = json.loads(Path(args.report).read_text(encoding="utf-8"))
@@ -87,6 +110,13 @@ def main(argv: list[str] | None = None) -> int:
     p_diff.add_argument("--tolerance", type=float, default=gate_mod.LATENCY_TOLERANCE)
     p_diff.add_argument("--out", default="", help="write to a file instead of stdout")
     p_diff.set_defaults(func=_cmd_diff)
+
+    p_html = sub.add_parser("html", help="render a self-contained HTML regression report")
+    p_html.add_argument("--baseline", required=True)
+    p_html.add_argument("--report", required=True)
+    p_html.add_argument("--tolerance", type=float, default=gate_mod.LATENCY_TOLERANCE)
+    p_html.add_argument("--out", default="soundcheck-report.html")
+    p_html.set_defaults(func=_cmd_html)
 
     args = parser.parse_args(argv)
     return args.func(args)

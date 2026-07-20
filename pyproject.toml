@@ -25,3 +25,6 @@ Repository = "https://github.com/RickyVishwakarma/soundcheck"
 
 [tool.setuptools]
 packages = ["soundcheck"]
+
+[tool.setuptools.package-data]
+soundcheck = ["assets/*.html"]

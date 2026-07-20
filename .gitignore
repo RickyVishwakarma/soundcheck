@@ -5,3 +5,4 @@ __pycache__/
 report.json
 .env
 node_modules/
+report-ui/dist/

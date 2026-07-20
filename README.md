@@ -25,7 +25,9 @@ is implemented — same personas, same metrics, real WebSocket.
       agent keeps talking over you) — measured, baselined, and gated
 - [x] `pip install`-able package with a `soundcheck` console command
 - [x] GitHub Action that gates the build and comments the reliability delta on your PR
-- [ ] Static HTML regression report (shareable, CI-artifact friendly)
+- [x] Static HTML regression report (`soundcheck html`) — React/TypeScript UI
+      compiled to one self-contained file; verdict, delta table, per-turn latency
+      bars, and barge-in recovery callouts. CI-artifact friendly, opens anywhere.
 - [ ] LLM-driven personas and LLM-judge evals (roadmap; the gate stays deterministic)
 
 ## Quickstart (no API keys)
@@ -41,7 +43,13 @@ soundcheck gate --baseline baselines/appointment_booking.json --report report.js
 
 # Render the delta as markdown (what the GitHub Action posts on your PR)
 soundcheck diff --baseline baselines/appointment_booking.json --report report.json
+
+# Or a self-contained HTML report: verdict, delta table, per-turn latency bars
+soundcheck html --baseline baselines/appointment_booking.json --report report.json
 ```
+
+The HTML report is a React/TypeScript app (source in `report-ui/`) compiled to a
+single file and committed as the package template — pip users never need Node.
 
 ## Use it as a GitHub Action
 
