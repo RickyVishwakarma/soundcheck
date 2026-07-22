@@ -43,8 +43,13 @@ class MockAgentTransport:
     testable in CI for free.
     """
 
-    def __init__(self, seed: int = 11) -> None:
+    def __init__(self, seed: int = 11, latency_bias_ms: float = 0.0) -> None:
         self._rng = random.Random(seed)
+        # A fixed penalty added to every reply's timing — stands in for a
+        # degraded agent config (e.g. a bloated system prompt that adds
+        # "thinking" latency). Lets a case study show the gate catching a
+        # regression deterministically, without a live agent.
+        self._bias = latency_bias_ms
 
     def start(self) -> None:
         pass
@@ -61,13 +66,15 @@ class MockAgentTransport:
             text = "I understand. I can process that refund for you right now."
         else:
             text = "Could you tell me a bit more so I can help?"
-        ttfa = self._rng.uniform(180, 420)
+        ttfa = self._rng.uniform(180, 420) + self._bias
         total = ttfa + self._rng.uniform(600, 1800)
         recovery = None
         if barge_in_after_ms is not None:
             # A well-behaved agent stops quickly after a barge-in; the mock's
             # recovery time is seeded like its latencies so runs stay identical.
-            recovery = round(self._rng.uniform(150, 500), 1)
+            # A heavier config is also slower to notice the barge-in, so the
+            # bias feeds recovery too.
+            recovery = round(self._rng.uniform(150, 500) + self._bias, 1)
             total = round(barge_in_after_ms + recovery + self._rng.uniform(200, 600), 1)
         return AgentReply(
             text=text, ttfa_ms=round(ttfa, 1), total_ms=round(total, 1), recovery_ms=recovery

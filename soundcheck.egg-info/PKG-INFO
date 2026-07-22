@@ -1,17 +1,30 @@
+Metadata-Version: 2.4
+Name: soundcheck
+Version: 0.2.0
+Summary: CI-native reliability gate for voice agents: simulated callers, latency/interruption metrics, and a regression gate that fails your build.
+Author: Ricky Vishwakarma
+License: MIT
+Project-URL: Repository, https://github.com/RickyVishwakarma/soundcheck
+Keywords: voice-agents,testing,ci,elevenlabs,reliability,evals
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pyyaml>=6.0
+Provides-Extra: live
+Requires-Dist: websocket-client>=1.7; extra == "live"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
 # SoundCheck — a reliability harness for voice agents
 
 **Stress-test conversational voice agents before they talk to a real customer.**
-Simulated callers hammer an agent with interruptions and topic changes; SoundCheck
-measures what actually matters — time-to-first-audio, turn latency, interruption
-recovery, goal completion — and **fails your CI build when an agent config change
-regresses**, commenting the delta on the pull request.
+Simulated callers hammer an agent with interruptions, topic changes, and bad audio
+manners; SoundCheck measures what actually matters — time-to-first-audio, turn
+latency, interruption recovery, goal completion — scores every transcript with an
+LLM judge, and **fails your CI build when an agent config change regresses**.
 
 > Voice-agent platforms make it easy to *build* an agent. Almost nothing exists to
 > prove an agent is *ready*. SoundCheck is the missing pre-production gate: the
 > soundcheck before the show.
-
-📉 **See it catch a real regression:** [CASE_STUDY.md](CASE_STUDY.md) — a bloated
-prompt that still books the appointment but adds 62% latency, blocked by the gate.
 
 ## Status
 

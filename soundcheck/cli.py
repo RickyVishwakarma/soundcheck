@@ -19,8 +19,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
     persona = load_persona(args.persona)
     api_key = os.environ.get("ELEVENLABS_API_KEY")
     if args.offline or not api_key:
-        transport = MockAgentTransport(seed=args.seed)
+        transport = MockAgentTransport(seed=args.seed, latency_bias_ms=args.latency_bias)
         mode = "offline (mock agent)"
+        if args.latency_bias:
+            mode += f" +{args.latency_bias:g}ms bias"
     else:
         transport = ElevenLabsTransport(agent_id=args.agent_id, api_key=api_key)
         mode = f"live (agent {args.agent_id})"
@@ -95,6 +97,12 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument("--offline", action="store_true", help="force the mock agent")
     p_run.add_argument("--agent-id", default=os.environ.get("ELEVENLABS_AGENT_ID", ""))
     p_run.add_argument("--seed", type=int, default=11)
+    p_run.add_argument(
+        "--latency-bias",
+        type=float,
+        default=0.0,
+        help="offline only: add a fixed ms penalty to every reply (simulate a degraded agent config)",
+    )
     p_run.add_argument("--out", default="report.json")
     p_run.set_defaults(func=_cmd_run)
 
