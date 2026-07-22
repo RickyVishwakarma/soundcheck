@@ -1,2 +1,0 @@
-[console_scripts]
-soundcheck = soundcheck.cli:main

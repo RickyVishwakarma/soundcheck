@@ -6,3 +6,8 @@ report.json
 .env
 node_modules/
 report-ui/dist/
+
+# build artifacts
+*.egg-info/
+build/
+dist/
