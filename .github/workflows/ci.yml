@@ -25,3 +25,11 @@ jobs:
         with:
           persona: personas/impatient_refund.yaml
           baseline: baselines/impatient_refund.json
+      - uses: ./
+        with:
+          persona: personas/hesitant_caller.yaml
+          baseline: baselines/hesitant_caller.json
+      - uses: ./
+        with:
+          persona: personas/bilingual_caller.yaml
+          baseline: baselines/bilingual_caller.json

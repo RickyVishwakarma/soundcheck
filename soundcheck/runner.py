@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from . import __version__, metrics
+from . import __version__, metrics, session
 from .judge import Judge
 from .personas import Persona
 from .session import AgentTransport
@@ -23,7 +23,10 @@ def run(persona: Persona, transport: AgentTransport, judge: Optional[Judge] = No
         behaviors = [None] + [t.behavior for t in persona.turns]
         for utterance, behavior in zip(utterances, behaviors):
             barge = BARGE_IN_AFTER_MS if behavior == "interrupt" else None
-            reply = transport.send(utterance, barge_in_after_ms=barge)
+            quiet = session.SILENCE_MS if behavior == "silence" else None
+            reply = transport.send(
+                utterance, barge_in_after_ms=barge, silence_before_ms=quiet
+            )
             turns.append(
                 {
                     "user": utterance,

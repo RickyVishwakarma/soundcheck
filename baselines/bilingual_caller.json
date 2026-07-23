@@ -1,0 +1,71 @@
+{
+  "soundcheck_version": "0.2.0",
+  "persona": "bilingual_caller",
+  "goal": "Book an appointment while switching between Hindi/Spanish and English",
+  "generated_at": "2026-07-23T11:30:39+00:00",
+  "turns": [
+    {
+      "user": "Hi, I'd like to book an appointment.",
+      "behavior": null,
+      "agent": "I can help with that. What day works for you?",
+      "ttfa_ms": 288.6,
+      "total_ms": 1560.3,
+      "recovery_ms": null,
+      "speech_ms": 3214.2,
+      "talkover_ms": null
+    },
+    {
+      "user": "Hola, perd\u00f3n \u2014 \u00bfhabla espa\u00f1ol?",
+      "behavior": "language_switch",
+      "agent": "I can help with that. Could you continue in English?",
+      "ttfa_ms": 401.8,
+      "total_ms": 1560.6,
+      "recovery_ms": null,
+      "speech_ms": 3714.2,
+      "talkover_ms": null
+    },
+    {
+      "user": "Okay, English is fine. Do you have Tuesday morning?",
+      "behavior": null,
+      "agent": "You're booked for Tuesday at 10am \u2014 confirmed.",
+      "ttfa_ms": 301.9,
+      "total_ms": 1606.7,
+      "recovery_ms": null,
+      "speech_ms": 3285.7,
+      "talkover_ms": null
+    },
+    {
+      "user": "\u0928\u092e\u0938\u094d\u0924\u0947, Tuesday 10am theek hai. My name is Ricky.",
+      "behavior": "language_switch",
+      "agent": "You're booked for Tuesday at 10am \u2014 confirmed.",
+      "ttfa_ms": 224.3,
+      "total_ms": 1438.6,
+      "recovery_ms": null,
+      "speech_ms": 3285.7,
+      "talkover_ms": null
+    }
+  ],
+  "judge": {
+    "judge": "heuristic",
+    "task_completed": true,
+    "task_completed_reason": "matched success keyword",
+    "hallucinated": false,
+    "hallucination_detail": "",
+    "instruction_following": 5,
+    "tone": 3
+  },
+  "metrics": {
+    "turn_count": 4,
+    "ttfa_ms_p50": 295.2,
+    "ttfa_ms_p95": 401.8,
+    "turn_ms_p50": 1560.5,
+    "turn_ms_p95": 1606.7,
+    "recovery_ms_p95": null,
+    "talkover_ms_p95": null,
+    "speech_ms_total": 13499.8,
+    "goal_completed": true,
+    "hallucinated": false,
+    "instruction_following": 5,
+    "tone": 3
+  }
+}

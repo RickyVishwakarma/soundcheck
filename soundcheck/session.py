@@ -31,12 +31,23 @@ class AgentReply:
 
 class AgentTransport(Protocol):
     def start(self) -> None: ...
-    def send(self, utterance: str, *, barge_in_after_ms: Optional[float] = None) -> AgentReply: ...
+    def send(
+        self,
+        utterance: str,
+        *,
+        barge_in_after_ms: Optional[float] = None,
+        silence_before_ms: Optional[float] = None,
+    ) -> AgentReply: ...
     def close(self) -> None: ...
 
 
 # What the simulated caller says when barging in mid-reply.
 BARGE_IN_TEXT = "Sorry — hold on, one second."
+
+# How long the caller stays quiet on a `silence` turn. Real callers pause to
+# think, get distracted, or lose signal; an agent that fills the gap by
+# repeating itself or hanging up is failing a very common real call.
+SILENCE_MS = 3000.0
 
 
 class MockAgentTransport:
@@ -65,7 +76,13 @@ class MockAgentTransport:
     def start(self) -> None:
         pass
 
-    def send(self, utterance: str, *, barge_in_after_ms: Optional[float] = None) -> AgentReply:
+    def send(
+        self,
+        utterance: str,
+        *,
+        barge_in_after_ms: Optional[float] = None,
+        silence_before_ms: Optional[float] = None,
+    ) -> AgentReply:
         lowered = utterance.lower()
         if any(w in lowered for w in ("book", "appointment", "schedule")):
             text = "I can help with that. What day works for you?"
@@ -75,8 +92,16 @@ class MockAgentTransport:
             text = "A standard cleaning is 1500 rupees."
         elif any(w in lowered for w in ("refund", "money back", "cancel")):
             text = "I understand. I can process that refund for you right now."
+        elif any(w in lowered for w in ("hola", "habla", "espanol", "español", "नमस्ते", "हिंदी")):
+            # A code-switching caller: a good agent either follows or says it
+            # can't. The mock stays in English so the judge can grade that.
+            text = "I can help with that. Could you continue in English?"
         else:
             text = "Could you tell me a bit more so I can help?"
+        # A caller who goes quiet gives the agent time to fill the silence;
+        # the reply that follows is measured from the end of that gap.
+        if silence_before_ms and self._pace:
+            time.sleep(silence_before_ms / 1000.0)
         ttfa = self._rng.uniform(180, 420) + self._bias
         total = ttfa + self._rng.uniform(600, 1800)
         recovery = None
@@ -179,9 +204,24 @@ class ElevenLabsTransport:
                 return
         raise TimeoutError("ElevenLabs agent did not initiate the conversation in time")
 
-    def send(self, utterance: str, *, barge_in_after_ms: Optional[float] = None) -> AgentReply:
+    def send(
+        self,
+        utterance: str,
+        *,
+        barge_in_after_ms: Optional[float] = None,
+        silence_before_ms: Optional[float] = None,
+    ) -> AgentReply:
         if self._ws is None:
             raise RuntimeError("transport not started; call start() first")
+        if silence_before_ms:
+            # Say nothing and let the agent sit with it. Pings are answered so
+            # the server does not drop us for being idle — the point is that
+            # the *caller* is quiet, not that the connection is dead.
+            deadline = time.monotonic() + silence_before_ms / 1000.0
+            while time.monotonic() < deadline:
+                frame = self._recv()
+                if frame and frame.get("type") == "ping":
+                    self._send_pong(frame.get("ping_event", {}).get("event_id"))
         self._ws.send(json.dumps({"type": "user_message", "text": utterance}))
         return self._consume_turn(
             self._recv,

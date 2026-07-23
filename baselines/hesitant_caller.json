@@ -1,0 +1,71 @@
+{
+  "soundcheck_version": "0.2.0",
+  "persona": "hesitant_caller",
+  "goal": "Book an appointment, but the caller keeps going quiet mid-conversation",
+  "generated_at": "2026-07-23T11:30:38+00:00",
+  "turns": [
+    {
+      "user": "Hi, um, I wanted to ask about booking something.",
+      "behavior": null,
+      "agent": "I can help with that. What day works for you?",
+      "ttfa_ms": 288.6,
+      "total_ms": 1560.3,
+      "recovery_ms": null,
+      "speech_ms": 3214.2,
+      "talkover_ms": null
+    },
+    {
+      "user": "Sorry, I was checking my calendar. Tuesday?",
+      "behavior": "silence",
+      "agent": "You're booked for Tuesday at 10am \u2014 confirmed.",
+      "ttfa_ms": 401.8,
+      "total_ms": 1560.6,
+      "recovery_ms": null,
+      "speech_ms": 3285.7,
+      "talkover_ms": null
+    },
+    {
+      "user": "How much does a cleaning cost?",
+      "behavior": "offtopic",
+      "agent": "A standard cleaning is 1500 rupees.",
+      "ttfa_ms": 301.9,
+      "total_ms": 1606.7,
+      "recovery_ms": null,
+      "speech_ms": 2500.0,
+      "talkover_ms": null
+    },
+    {
+      "user": "Okay, Tuesday 10am. Name is Ricky.",
+      "behavior": "silence",
+      "agent": "You're booked for Tuesday at 10am \u2014 confirmed.",
+      "ttfa_ms": 224.3,
+      "total_ms": 1438.6,
+      "recovery_ms": null,
+      "speech_ms": 3285.7,
+      "talkover_ms": null
+    }
+  ],
+  "judge": {
+    "judge": "heuristic",
+    "task_completed": true,
+    "task_completed_reason": "matched success keyword",
+    "hallucinated": false,
+    "hallucination_detail": "",
+    "instruction_following": 5,
+    "tone": 3
+  },
+  "metrics": {
+    "turn_count": 4,
+    "ttfa_ms_p50": 295.2,
+    "ttfa_ms_p95": 401.8,
+    "turn_ms_p50": 1560.5,
+    "turn_ms_p95": 1606.7,
+    "recovery_ms_p95": null,
+    "talkover_ms_p95": null,
+    "speech_ms_total": 12285.6,
+    "goal_completed": true,
+    "hallucinated": false,
+    "instruction_following": 5,
+    "tone": 3
+  }
+}

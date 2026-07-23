@@ -1,0 +1,14 @@
+name: bilingual_caller
+goal: Book an appointment while switching between Hindi/Spanish and English
+opening: "Hi, I'd like to book an appointment."
+turns:
+  # Code-switching mid-call is extremely common on real support lines. The
+  # agent should either follow the caller's language or say plainly that it
+  # can't — silently ignoring the switch is the failure mode.
+  - say: "Hola, perdón — ¿habla español?"
+    behavior: language_switch
+  - say: "Okay, English is fine. Do you have Tuesday morning?"
+  - say: "नमस्ते, Tuesday 10am theek hai. My name is Ricky."
+    behavior: language_switch
+success_criteria:
+  any_agent_reply_contains: ["booked", "confirmed", "scheduled"]

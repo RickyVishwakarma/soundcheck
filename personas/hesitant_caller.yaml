@@ -1,0 +1,14 @@
+name: hesitant_caller
+goal: Book an appointment, but the caller keeps going quiet mid-conversation
+opening: "Hi, um, I wanted to ask about booking something."
+turns:
+  # The caller stops talking. A good agent waits, or prompts once and waits
+  # again; a bad one repeats itself, talks over the pause, or hangs up.
+  - say: "Sorry, I was checking my calendar. Tuesday?"
+    behavior: silence
+  - say: "How much does a cleaning cost?"
+    behavior: offtopic
+  - say: "Okay, Tuesday 10am. Name is Ricky."
+    behavior: silence
+success_criteria:
+  any_agent_reply_contains: ["booked", "confirmed", "scheduled"]

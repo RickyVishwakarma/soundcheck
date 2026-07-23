@@ -61,7 +61,9 @@ fine.
 ([`examples/audio/`](examples/audio/)), so a reviewer can listen to exactly
 what the metric describes.
 
-- [x] Scripted caller personas (YAML)
+- [x] Scripted caller personas (YAML) with four adversarial behaviors —
+      `interrupt` (barge-in), `silence` (caller goes quiet mid-call),
+      `language_switch` (code-switching), `offtopic`
 - [x] Metrics: TTFA, turn latency percentiles, goal completion
 - [x] Regression gate with committed baselines (CI-ready, exit codes)
 - [x] Deterministic offline mode — full pipeline with no external services
