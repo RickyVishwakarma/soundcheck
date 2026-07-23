@@ -20,6 +20,9 @@ LATENCY_KEYS = (
     "talkover_ms_p95",
 )
 
+# Judge scores, 1-5, higher is better — compared in the opposite direction.
+QUALITY_KEYS = ("instruction_following", "tone")
+
 
 def compare(baseline: dict, report: dict, tolerance: float = LATENCY_TOLERANCE) -> list[str]:
     failures: list[str] = []
@@ -27,6 +30,22 @@ def compare(baseline: dict, report: dict, tolerance: float = LATENCY_TOLERANCE) 
 
     if base_m.get("goal_completed") and not new_m.get("goal_completed"):
         failures.append("goal_completed regressed: baseline succeeded, this run did not")
+
+    # A clean baseline that starts hallucinating is a hard failure, like goals.
+    if new_m.get("hallucinated") and not base_m.get("hallucinated"):
+        failures.append("hallucinated: baseline invented nothing, this run did")
+
+    # Judge scores run 1-5 and higher is better, so the regression is a DROP —
+    # the opposite direction from the latency keys above.
+    for key in QUALITY_KEYS:
+        base_v, new_v = base_m.get(key), new_m.get(key)
+        if base_v is None or new_v is None:
+            continue
+        if new_v < base_v * (1 - tolerance):
+            failures.append(
+                f"{key} regressed: {base_v} -> {new_v} "
+                f"({(new_v / base_v - 1) * 100:.0f}%, tolerance -{tolerance * 100:.0f}%)"
+            )
 
     for key in LATENCY_KEYS:
         base_v, new_v = base_m.get(key), new_m.get(key)

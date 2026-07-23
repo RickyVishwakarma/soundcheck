@@ -78,7 +78,9 @@ what the metric describes.
 - [x] Static HTML regression report (`soundcheck html`) — React/TypeScript UI
       compiled to one self-contained file; verdict, delta table, per-turn latency
       bars, and barge-in recovery callouts. CI-artifact friendly, opens anywhere.
-- [ ] LLM-driven personas and LLM-judge evals (roadmap; the gate stays deterministic)
+- [x] **Transcript judge** — grades task success, hallucination, instruction
+      following and tone; deterministic heuristic in CI, Claude judge opt-in
+- [ ] LLM-driven personas (roadmap; the gate stays deterministic by default)
 
 ## Quickstart (no API keys)
 
@@ -100,6 +102,30 @@ soundcheck html --baseline baselines/appointment_booking.json --report report.js
 
 The HTML report is a React/TypeScript app (source in `report-ui/`) compiled to a
 single file and committed as the package template — pip users never need Node.
+
+## Judging the transcript
+
+Keyword matching answers *"did the reply contain the word `booked`"* — which is
+brittle. An agent that says *"your appointment is set for Tuesday"* completed
+the task and fails that check. A judge reads the conversation and decides.
+
+```bash
+soundcheck run --persona personas/appointment_booking.yaml --offline \
+  --judge heuristic          # default: deterministic, no key, what CI runs
+soundcheck run --persona personas/appointment_booking.yaml \
+  --judge claude             # reads the transcript (needs ANTHROPIC_API_KEY)
+```
+
+The judge returns task success, whether the agent **hallucinated**, and 1–5
+scores for instruction-following and tone. When a judge runs, its verdict is
+authoritative for `goal_completed`; without one the keyword check still applies.
+
+The gate treats quality scores as the **inverse** of latency — a *drop* past the
+tolerance is the regression — and a run that starts hallucinating when the
+baseline didn't fails outright.
+
+> CI runs the heuristic judge on purpose: the gate must stay free, offline and
+> flake-less. The Claude judge is opt-in for local and pre-release runs.
 
 ## Run a whole suite at once
 

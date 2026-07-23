@@ -2,7 +2,7 @@
   "soundcheck_version": "0.2.0",
   "persona": "appointment_booking",
   "goal": "Book a dental appointment for next Tuesday morning",
-  "generated_at": "2026-07-23T08:40:08+00:00",
+  "generated_at": "2026-07-23T10:28:51+00:00",
   "turns": [
     {
       "user": "Hi, I'd like to book an appointment.",
@@ -45,6 +45,15 @@
       "talkover_ms": null
     }
   ],
+  "judge": {
+    "judge": "heuristic",
+    "task_completed": true,
+    "task_completed_reason": "matched success keyword",
+    "hallucinated": false,
+    "hallucination_detail": "",
+    "instruction_following": 5,
+    "tone": 3
+  },
   "metrics": {
     "turn_count": 4,
     "ttfa_ms_p50": 295.2,
@@ -54,6 +63,9 @@
     "recovery_ms_p95": null,
     "talkover_ms_p95": null,
     "speech_ms_total": 12285.6,
-    "goal_completed": true
+    "goal_completed": true,
+    "hallucinated": false,
+    "instruction_following": 5,
+    "tone": 3
   }
 }

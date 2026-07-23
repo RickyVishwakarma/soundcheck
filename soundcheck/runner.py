@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Optional
 
 from . import __version__, metrics
+from .judge import Judge
 from .personas import Persona
 from .session import AgentTransport
 
@@ -13,7 +15,7 @@ from .session import AgentTransport
 BARGE_IN_AFTER_MS = 400.0
 
 
-def run(persona: Persona, transport: AgentTransport) -> dict:
+def run(persona: Persona, transport: AgentTransport, judge: Optional[Judge] = None) -> dict:
     transport.start()
     try:
         turns = []
@@ -37,11 +39,21 @@ def run(persona: Persona, transport: AgentTransport) -> dict:
     finally:
         transport.close()
 
+    verdict = None
+    if judge is not None:
+        # A judge that errors must not lose the run — the timing data is still
+        # valid and the gate can fall back to keyword goal completion.
+        try:
+            verdict = judge.score(persona.goal, turns)
+        except Exception as exc:
+            verdict = {"judge": judge.name, "error": f"{type(exc).__name__}: {exc}"}
+
     return {
         "soundcheck_version": __version__,
         "persona": persona.name,
         "goal": persona.goal,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "turns": turns,
-        "metrics": metrics.compute(turns, persona.success_any),
+        "judge": verdict,
+        "metrics": metrics.compute(turns, persona.success_any, verdict),
     }

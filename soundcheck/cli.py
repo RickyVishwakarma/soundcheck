@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from . import gate as gate_mod
+from . import judge as judge_mod
 from . import report as report_mod
 from . import runner
 from . import suite as suite_mod
@@ -30,10 +31,20 @@ def _cmd_run(args: argparse.Namespace) -> int:
             agent_id=args.agent_id, api_key=api_key, audio_dir=args.save_audio or None
         )
         mode = f"live (agent {args.agent_id})"
-    report = runner.run(persona, transport)
+    judge = judge_mod.build(args.judge, persona.success_any)
+    report = runner.run(persona, transport, judge=judge)
     Path(args.out).write_text(json.dumps(report, indent=2), encoding="utf-8")
     m = report["metrics"]
     print(f"soundcheck run — {persona.name} — {mode}")
+    verdict = report.get("judge") or {}
+    if verdict.get("error"):
+        print(f"  judge ({verdict['judge']}) failed: {verdict['error']}")
+    elif args.judge != "none":
+        print(
+            f"  judge={verdict.get('judge')}  instruction_following="
+            f"{m['instruction_following']}/5  tone={m['tone']}/5"
+            + ("  HALLUCINATED" if m.get("hallucinated") else "")
+        )
     print(f"  turns={m['turn_count']}  ttfa p95={m['ttfa_ms_p95']}ms  "
           f"turn p95={m['turn_ms_p95']}ms  goal_completed={m['goal_completed']}")
     print(f"  report -> {args.out}")
@@ -162,6 +173,12 @@ def main(argv: list[str] | None = None) -> int:
         default="",
         metavar="DIR",
         help="live only: save each agent turn as a playable WAV in DIR",
+    )
+    p_run.add_argument(
+        "--judge",
+        choices=["heuristic", "claude", "none"],
+        default="heuristic",
+        help="how to grade the transcript (claude needs ANTHROPIC_API_KEY)",
     )
     p_run.add_argument("--out", default="report.json")
     p_run.set_defaults(func=_cmd_run)

@@ -2,7 +2,7 @@
   "soundcheck_version": "0.2.0",
   "persona": "impatient_refund",
   "goal": "Get a refund for a cancelled service, while talking over the agent",
-  "generated_at": "2026-07-23T08:40:08+00:00",
+  "generated_at": "2026-07-23T10:28:52+00:00",
   "turns": [
     {
       "user": "Hi, I need a refund for the appointment you cancelled on me.",
@@ -45,6 +45,15 @@
       "talkover_ms": 182.9
     }
   ],
+  "judge": {
+    "judge": "heuristic",
+    "task_completed": true,
+    "task_completed_reason": "matched success keyword",
+    "hallucinated": false,
+    "hallucination_detail": "",
+    "instruction_following": 3,
+    "tone": 3
+  },
   "metrics": {
     "turn_count": 4,
     "ttfa_ms_p50": 309.9,
@@ -54,6 +63,9 @@
     "recovery_ms_p95": 327.7,
     "talkover_ms_p95": 327.7,
     "speech_ms_total": 14153.2,
-    "goal_completed": true
+    "goal_completed": true,
+    "hallucinated": false,
+    "instruction_following": 3,
+    "tone": 3
   }
 }

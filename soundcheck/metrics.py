@@ -21,7 +21,9 @@ def _pct(values: list[float], pct: float) -> float:
     return round(min(qs[min(int(pct) - 1, 98)], max(values)), 1)
 
 
-def compute(turns: list[dict], success_any: list[str]) -> dict:
+def compute(
+    turns: list[dict], success_any: list[str], judge: dict | None = None
+) -> dict:
     ttfas = [t["ttfa_ms"] for t in turns]
     totals = [t["total_ms"] for t in turns]
     # Barge-in recovery only exists on interrupted turns; how fast the agent
@@ -31,6 +33,17 @@ def compute(turns: list[dict], success_any: list[str]) -> dict:
     talkovers = [t["talkover_ms"] for t in turns if t.get("talkover_ms") is not None]
     speech = [t["speech_ms"] for t in turns if t.get("speech_ms") is not None]
     replies = " ".join(t["agent"].lower() for t in turns)
+
+    # A judge's verdict, when present, is authoritative for goal completion —
+    # it recognises "your appointment is set" where the keyword check cannot.
+    judged = judge or {}
+    judge_ok = "error" not in judged and "task_completed" in judged
+    goal = (
+        judged["task_completed"]
+        if judge_ok
+        else (any(s in replies for s in success_any) if success_any else None)
+    )
+
     return {
         "turn_count": len(turns),
         "ttfa_ms_p50": _pct(ttfas, 50),
@@ -40,5 +53,8 @@ def compute(turns: list[dict], success_any: list[str]) -> dict:
         "recovery_ms_p95": _pct(recoveries, 95) if recoveries else None,
         "talkover_ms_p95": _pct(talkovers, 95) if talkovers else None,
         "speech_ms_total": round(sum(speech), 1) if speech else None,
-        "goal_completed": any(s in replies for s in success_any) if success_any else None,
+        "goal_completed": goal,
+        "hallucinated": judged.get("hallucinated") if judge_ok else None,
+        "instruction_following": judged.get("instruction_following") if judge_ok else None,
+        "tone": judged.get("tone") if judge_ok else None,
     }
