@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: install everything",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pip install -e \".[dev,server,live]\" && npm install --prefix dashboard",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Run API",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m uvicorn server.app:app --reload --port 8077",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "soundcheck" }
+    },
+    {
+      "label": "Run dashboard",
+      "type": "shell",
+      "command": "npm run dev --prefix dashboard",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "soundcheck" }
+    },
+    {
+      "label": "Start SoundCheck (API + dashboard)",
+      "dependsOn": ["Run API", "Run dashboard"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m pytest -q",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Demo: watch the gate catch a regression",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/soundcheck.exe run --persona personas/appointment_booking.yaml --offline --latency-bias 250 --out candidate.json && ${workspaceFolder}/.venv/Scripts/soundcheck.exe gate --baseline baselines/appointment_booking.json --report candidate.json",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}

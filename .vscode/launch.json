@@ -1,0 +1,53 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["server.app:app", "--reload", "--port", "8077"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Debug CLI: run (offline)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "soundcheck.cli",
+      "args": [
+        "run",
+        "--persona", "personas/impatient_refund.yaml",
+        "--offline",
+        "--out", "report.json"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug CLI: run against my real agent",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "soundcheck.cli",
+      "args": [
+        "run",
+        "--persona", "personas/appointment_booking.yaml",
+        "--agent-id", "${input:agentId}",
+        "--out", "live.json"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      // Reads ELEVENLABS_API_KEY from .env — the key never goes in this file.
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "agentId",
+      "type": "promptString",
+      "description": "ElevenLabs agent id",
+      "default": "agent_9601ky704kwzf28s6r69j6zykt5b"
+    }
+  ]
+}
