@@ -16,3 +16,13 @@ server/soundcheck.db
 *.db
 dashboard/.next/
 dashboard/node_modules/
+
+# Scratch output from local runs. Root-scoped (`/`) on purpose: a bare
+# `*.html` would also swallow soundcheck/assets/report_template.html and
+# report-ui/index.html, which are both source.
+/*.html
+/candidate.json
+/live.json
+/live_refund.json
+/suite.json
+*.tsbuildinfo
