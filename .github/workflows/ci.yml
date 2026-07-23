@@ -10,7 +10,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e ".[dev]"
+      # The API tests import fastapi and the transport tests import
+      # websocket-client, so the test job needs those extras — not just [dev].
+      - run: pip install -e ".[dev,server,live]"
       - run: pytest -q
       # The harness gates itself — through its own published Action, so the
       # thing we tell strangers to use is the thing that protects this repo.
