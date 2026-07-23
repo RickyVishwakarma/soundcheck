@@ -26,7 +26,10 @@ soundcheck = "soundcheck.cli:main"
 Repository = "https://github.com/RickyVishwakarma/soundcheck"
 
 [tool.setuptools]
-packages = ["soundcheck"]
+# `server` ships with the distribution too — leaving it out meant it was only
+# importable when CWD happened to be on sys.path (i.e. `python -m pytest`, but
+# not the bare `pytest` CI runs).
+packages = ["soundcheck", "server"]
 
 [tool.setuptools.package-data]
 soundcheck = ["assets/*.html"]
