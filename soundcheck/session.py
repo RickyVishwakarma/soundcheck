@@ -48,8 +48,14 @@ class MockAgentTransport:
     testable in CI for free.
     """
 
-    def __init__(self, seed: int = 11, latency_bias_ms: float = 0.0) -> None:
+    def __init__(
+        self, seed: int = 11, latency_bias_ms: float = 0.0, pace: bool = False
+    ) -> None:
         self._rng = random.Random(seed)
+        # When True, actually sleep for the latency it reports. Off by default
+        # (tests must stay instant); on for suite demos, where a call that
+        # returns immediately makes concurrency impossible to observe.
+        self._pace = pace
         # A fixed penalty added to every reply's timing — stands in for a
         # degraded agent config (e.g. a bloated system prompt that adds
         # "thinking" latency). Lets a case study show the gate catching a
@@ -93,6 +99,8 @@ class MockAgentTransport:
             # Audio still in flight when the caller cut in.
             capture.add(b"\x00\x00" * int(SAMPLE_RATE * (recovery or 0.0) / 1000.0))
             talkover = capture.talkover_ms
+        if self._pace:
+            time.sleep(total / 1000.0)
         return AgentReply(
             text=text,
             ttfa_ms=round(ttfa, 1),

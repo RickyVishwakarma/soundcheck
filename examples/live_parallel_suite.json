@@ -1,0 +1,150 @@
+{
+  "soundcheck_version": "0.2.0",
+  "started_at": "2026-07-23T10:09:58+00:00",
+  "concurrency": 2,
+  "peak_parallel": 2,
+  "wall_ms": 33829.0,
+  "sequential_ms": 63548.0,
+  "speedup": 1.88,
+  "runs": [
+    {
+      "persona": "appointment_booking",
+      "attempt": 1,
+      "status": "ok",
+      "duration_ms": 33829.0,
+      "report": {
+        "soundcheck_version": "0.2.0",
+        "persona": "appointment_booking",
+        "goal": "Book a dental appointment for next Tuesday morning",
+        "generated_at": "2026-07-23T10:09:58+00:00",
+        "turns": [
+          {
+            "user": "Hi, I'd like to book an appointment.",
+            "behavior": null,
+            "agent": "[warmly] Hello, thank you for calling our dental clinic! How can I help you book an appointment today? [warmly] Hello, thank you for calling! I can certainly help you with that. What day and time would be best for your appointment?",
+            "ttfa_ms": 672.0,
+            "total_ms": 4610.0,
+            "recovery_ms": null,
+            "speech_ms": 11840.0,
+            "talkover_ms": null
+          },
+          {
+            "user": "Do you have anything next Tuesday morning?",
+            "behavior": null,
+            "agent": "[thoughtful] Let me check our schedule for next Tuesday morning. Could you please tell me your full name?",
+            "ttfa_ms": 5313.0,
+            "total_ms": 6797.0,
+            "recovery_ms": null,
+            "speech_ms": 5200.0,
+            "talkover_ms": null
+          },
+          {
+            "user": "Actually, wait - how much does a cleaning cost?",
+            "behavior": "offtopic",
+            "agent": "A standard cleaning is fifteen hundred rupees. Now, about your appointment, could you let me know your full name so I can proceed with the booking?",
+            "ttfa_ms": 5094.0,
+            "total_ms": 7078.0,
+            "recovery_ms": null,
+            "speech_ms": 8560.0,
+            "talkover_ms": null
+          },
+          {
+            "user": "Okay, Tuesday 10am works. My name is Ricky.",
+            "behavior": null,
+            "agent": "[happy] Great! You're booked for Tuesday at ten AM, confirmed.",
+            "ttfa_ms": 1515.0,
+            "total_ms": 2250.0,
+            "recovery_ms": null,
+            "speech_ms": 4160.0,
+            "talkover_ms": null
+          }
+        ],
+        "metrics": {
+          "turn_count": 4,
+          "ttfa_ms_p50": 3304.5,
+          "ttfa_ms_p95": 5313.0,
+          "turn_ms_p50": 5703.5,
+          "turn_ms_p95": 7078.0,
+          "recovery_ms_p95": null,
+          "talkover_ms_p95": null,
+          "speech_ms_total": 29760.0,
+          "goal_completed": true
+        }
+      }
+    },
+    {
+      "persona": "impatient_refund",
+      "attempt": 1,
+      "status": "ok",
+      "duration_ms": 29719.0,
+      "report": {
+        "soundcheck_version": "0.2.0",
+        "persona": "impatient_refund",
+        "goal": "Get a refund for a cancelled service, while talking over the agent",
+        "generated_at": "2026-07-23T10:09:54+00:00",
+        "turns": [
+          {
+            "user": "Hi, I need a refund for the appointment you cancelled on me.",
+            "behavior": null,
+            "agent": "[warmly] Hello, thank you for calling our dental clinic! How can I help you book an appointment today? [warmly] Hello, thank you for calling. I can't directly process refunds here, but I can connect you with someone who can help you with that. Would you like me to transfer you to our billing department?",
+            "ttfa_ms": 703.0,
+            "total_ms": 6750.0,
+            "recovery_ms": null,
+            "speech_ms": 14240.0,
+            "talkover_ms": null
+          },
+          {
+            "user": "No listen, I don't want to rebook - I want my money back.",
+            "behavior": "interrupt",
+            "agent": "(no agent text)",
+            "ttfa_ms": 1797.0,
+            "total_ms": 2329.0,
+            "recovery_ms": 47.0,
+            "speech_ms": 2274.0,
+            "talkover_ms": 1089.6
+          },
+          {
+            "user": "How long until it reaches my account?",
+            "behavior": null,
+            "agent": "I... I understand your concern. Refund processing times can vary, but typically it takes about five to seven business days. If you need more specific details, I can connect you with our billing department. Would you like me to do that?",
+            "ttfa_ms": 5203.0,
+            "total_ms": 8750.0,
+            "recovery_ms": null,
+            "speech_ms": 13440.0,
+            "talkover_ms": null
+          },
+          {
+            "user": "Fine. Please process the refund.",
+            "behavior": "interrupt",
+            "agent": "(no agent text)",
+            "ttfa_ms": 1609.0,
+            "total_ms": 2547.0,
+            "recovery_ms": 219.0,
+            "speech_ms": 3553.1,
+            "talkover_ms": 2084.5
+          }
+        ],
+        "metrics": {
+          "turn_count": 4,
+          "ttfa_ms_p50": 1703.0,
+          "ttfa_ms_p95": 5203.0,
+          "turn_ms_p50": 4648.5,
+          "turn_ms_p95": 8750.0,
+          "recovery_ms_p95": 219.0,
+          "talkover_ms_p95": 2084.5,
+          "speech_ms_total": 33507.1,
+          "goal_completed": true
+        }
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "ok": 2,
+    "errors": 0,
+    "goal_completed": 2,
+    "goal_failed": 0,
+    "ttfa_ms_p95_worst": 5313.0,
+    "flakiness": {}
+  }
+}

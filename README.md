@@ -71,6 +71,8 @@ what the metric describes.
 - [x] **Real audio analysis** — decodes the PCM stream for `speech_ms` and
       `talkover_ms` (actual audio delivered after a barge-in), plus WAV
       recordings via `--save-audio`
+- [x] **Parallel suites** — run many callers at once on a bounded pool, with
+      per-scenario flakiness spread
 - [x] `pip install`-able package with a `soundcheck` console command
 - [x] GitHub Action that gates the build and comments the reliability delta on your PR
 - [x] Static HTML regression report (`soundcheck html`) — React/TypeScript UI
@@ -98,6 +100,37 @@ soundcheck html --baseline baselines/appointment_booking.json --report report.js
 
 The HTML report is a React/TypeScript app (source in `report-ui/`) compiled to a
 single file and committed as the package template — pip users never need Node.
+
+## Run a whole suite at once
+
+One call at a time is fine for a demo and useless for a real test pass. The
+suite runner fans callers out across a **bounded** thread pool — bounded
+because voice platforms cap simultaneous calls (ElevenLabs' free tier allows
+four), so unlimited fan-out gets you rate-limited rather than fast.
+
+```bash
+# every persona in personas/, each run 3 times, 4 calls in flight
+soundcheck suite --offline --pace --repeat 3 --concurrency 4
+```
+
+Measured, not claimed — the same 4 calls, sequential vs parallel:
+
+| Concurrency | Wall time | Speedup | Peak in flight |
+|---|---:|---:|---:|
+| 1 | 22.4 s | 1.0× | 1 |
+| 4 | **6.2 s** | **3.61×** | 4 |
+
+Against a **real ElevenLabs agent**, two concurrent WebSocket sessions ran
+63.5 s of calls in **33.8 s wall (1.88×)**.
+
+Repeats also expose **flakiness** — the same scenario, run several times:
+
+```
+flaky impatient_refund: ttfa p95 280.1–411.7ms (+47.0%)
+```
+
+That 47% spread is the agent itself being inconsistent, which is invisible if
+you only ever run a scenario once.
 
 ## Use it as a GitHub Action
 
