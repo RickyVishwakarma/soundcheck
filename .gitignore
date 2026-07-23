@@ -14,3 +14,5 @@ dist/
 
 server/soundcheck.db
 *.db
+dashboard/.next/
+dashboard/node_modules/
