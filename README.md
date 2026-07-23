@@ -40,6 +40,27 @@ on the two `interrupt` turns.
 
 Raw reports: [`examples/`](examples/).
 
+### Why it decodes the audio (and what that changed)
+
+SoundCheck decodes the PCM stream the agent sends rather than inferring
+everything from event arrival times. Running the `impatient_refund` persona
+live surfaced why that matters:
+
+| Turn 4 (caller barges in) | Value |
+|---|---:|
+| `recovery_ms` — wall-clock until audio stopped | 406 ms |
+| `talkover_ms` — **real audio delivered after the barge-in** | **1752.9 ms** |
+
+The event-timing metric understated the problem **by more than 4×**. The agent
+streams audio faster than real time, so nearly two seconds of speech had
+already been delivered — and that is what the caller actually hears on top of
+their own voice. A harness that only times events reports 406 ms and calls it
+fine.
+
+`--save-audio DIR` writes each agent turn as a playable 16 kHz WAV
+([`examples/audio/`](examples/audio/)), so a reviewer can listen to exactly
+what the metric describes.
+
 - [x] Scripted caller personas (YAML)
 - [x] Metrics: TTFA, turn latency percentiles, goal completion
 - [x] Regression gate with committed baselines (CI-ready, exit codes)
@@ -47,6 +68,9 @@ Raw reports: [`examples/`](examples/).
 - [x] Live transport: ElevenLabs Agents (WebSocket, TTFA from first audio event)
 - [x] Interruption injection: barge-in mid-reply + `recovery_ms` (how long the
       agent keeps talking over you) — measured, baselined, and gated
+- [x] **Real audio analysis** — decodes the PCM stream for `speech_ms` and
+      `talkover_ms` (actual audio delivered after a barge-in), plus WAV
+      recordings via `--save-audio`
 - [x] `pip install`-able package with a `soundcheck` console command
 - [x] GitHub Action that gates the build and comments the reliability delta on your PR
 - [x] Static HTML regression report (`soundcheck html`) — React/TypeScript UI

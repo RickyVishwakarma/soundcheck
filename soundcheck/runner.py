@@ -30,6 +30,8 @@ def run(persona: Persona, transport: AgentTransport) -> dict:
                     "ttfa_ms": reply.ttfa_ms,
                     "total_ms": reply.total_ms,
                     "recovery_ms": reply.recovery_ms,
+                    "speech_ms": reply.speech_ms,
+                    "talkover_ms": reply.talkover_ms,
                 }
             )
     finally:

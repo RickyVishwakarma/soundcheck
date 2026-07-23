@@ -24,7 +24,9 @@ def _cmd_run(args: argparse.Namespace) -> int:
         if args.latency_bias:
             mode += f" +{args.latency_bias:g}ms bias"
     else:
-        transport = ElevenLabsTransport(agent_id=args.agent_id, api_key=api_key)
+        transport = ElevenLabsTransport(
+            agent_id=args.agent_id, api_key=api_key, audio_dir=args.save_audio or None
+        )
         mode = f"live (agent {args.agent_id})"
     report = runner.run(persona, transport)
     Path(args.out).write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -102,6 +104,12 @@ def main(argv: list[str] | None = None) -> int:
         type=float,
         default=0.0,
         help="offline only: add a fixed ms penalty to every reply (simulate a degraded agent config)",
+    )
+    p_run.add_argument(
+        "--save-audio",
+        default="",
+        metavar="DIR",
+        help="live only: save each agent turn as a playable WAV in DIR",
     )
     p_run.add_argument("--out", default="report.json")
     p_run.set_defaults(func=_cmd_run)

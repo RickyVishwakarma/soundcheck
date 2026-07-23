@@ -27,6 +27,9 @@ def compute(turns: list[dict], success_any: list[str]) -> dict:
     # Barge-in recovery only exists on interrupted turns; how fast the agent
     # shuts up when talked over is a metric text-based evals cannot produce.
     recoveries = [t["recovery_ms"] for t in turns if t.get("recovery_ms") is not None]
+    # Measured off the decoded PCM rather than event timings.
+    talkovers = [t["talkover_ms"] for t in turns if t.get("talkover_ms") is not None]
+    speech = [t["speech_ms"] for t in turns if t.get("speech_ms") is not None]
     replies = " ".join(t["agent"].lower() for t in turns)
     return {
         "turn_count": len(turns),
@@ -35,5 +38,7 @@ def compute(turns: list[dict], success_any: list[str]) -> dict:
         "turn_ms_p50": _pct(totals, 50),
         "turn_ms_p95": _pct(totals, 95),
         "recovery_ms_p95": _pct(recoveries, 95) if recoveries else None,
+        "talkover_ms_p95": _pct(talkovers, 95) if talkovers else None,
+        "speech_ms_total": round(sum(speech), 1) if speech else None,
         "goal_completed": any(s in replies for s in success_any) if success_any else None,
     }

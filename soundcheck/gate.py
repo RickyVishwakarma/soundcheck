@@ -15,6 +15,9 @@ LATENCY_KEYS = (
     "turn_ms_p50",
     "turn_ms_p95",
     "recovery_ms_p95",
+    # Real audio the caller heard on top of their own speech — the metric a
+    # text-only eval pipeline cannot produce.
+    "talkover_ms_p95",
 )
 
 

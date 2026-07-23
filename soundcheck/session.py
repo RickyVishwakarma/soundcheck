@@ -13,6 +13,8 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Optional, Protocol
 
+from .audio import SAMPLE_RATE, AudioCapture, decode_chunk
+
 
 @dataclass
 class AgentReply:
@@ -22,6 +24,9 @@ class AgentReply:
     # Barge-in recovery: how long the agent kept talking after the caller
     # interrupted mid-reply. None when the turn had no interruption.
     recovery_ms: Optional[float] = None
+    # Measured from the decoded PCM stream, not from event timings:
+    speech_ms: Optional[float] = None    # audio the agent actually produced
+    talkover_ms: Optional[float] = None  # audio delivered after a barge-in
 
 
 class AgentTransport(Protocol):
@@ -76,8 +81,25 @@ class MockAgentTransport:
             # bias feeds recovery too.
             recovery = round(self._rng.uniform(150, 500) + self._bias, 1)
             total = round(barge_in_after_ms + recovery + self._rng.uniform(200, 600), 1)
+        # Synthesize the PCM a real agent would have streamed, so speech/talkover
+        # are computed by the same arithmetic as the live path rather than faked.
+        # Speaking rate ~14 chars/sec; 16-bit mono @ 16kHz.
+        speech_ms = len(text) / 14.0 * 1000.0
+        capture = AudioCapture()
+        capture.add(b"\x00\x00" * int(SAMPLE_RATE * speech_ms / 1000.0))
+        talkover = None
+        if barge_in_after_ms is not None:
+            capture.mark()
+            # Audio still in flight when the caller cut in.
+            capture.add(b"\x00\x00" * int(SAMPLE_RATE * (recovery or 0.0) / 1000.0))
+            talkover = capture.talkover_ms
         return AgentReply(
-            text=text, ttfa_ms=round(ttfa, 1), total_ms=round(total, 1), recovery_ms=recovery
+            text=text,
+            ttfa_ms=round(ttfa, 1),
+            total_ms=round(total, 1),
+            recovery_ms=recovery,
+            speech_ms=capture.speech_ms,
+            talkover_ms=talkover,
         )
 
     def close(self) -> None:
@@ -106,6 +128,7 @@ class ElevenLabsTransport:
         quiet_ms: float = 2500.0,
         turn_timeout_ms: float = 30000.0,
         connect_timeout_ms: float = 15000.0,
+        audio_dir: Optional[str] = None,
     ) -> None:
         if not agent_id:
             raise ValueError("agent_id is required for the live ElevenLabs transport")
@@ -116,6 +139,9 @@ class ElevenLabsTransport:
         # Hard ceiling on waiting for a turn (agent never responds).
         self.turn_timeout_ms = turn_timeout_ms
         self.connect_timeout_ms = connect_timeout_ms
+        # When set, each agent turn is saved as a playable WAV for review.
+        self.audio_dir = audio_dir
+        self._turn_index = 0
         self._ws = None
 
     def start(self) -> None:
@@ -193,6 +219,7 @@ class ElevenLabsTransport:
         last_audio_ms: Optional[float] = None
         barged_at_ms: Optional[float] = None
         text_parts: list[str] = []
+        capture = AudioCapture()
 
         while True:
             frame = recv()
@@ -207,6 +234,8 @@ class ElevenLabsTransport:
             ):
                 barge_in()
                 barged_at_ms = now
+                # Everything the agent sends from here is talk-over.
+                capture.mark()
 
             if frame is None:
                 if last_audio_ms is not None:
@@ -228,6 +257,7 @@ class ElevenLabsTransport:
                 if ttfa_ms is None:
                     ttfa_ms = now - t0
                 last_audio_ms = now
+                capture.add(decode_chunk(frame.get("audio_event", {}).get("audio_base_64", "")))
                 if frame.get("audio_event", {}).get("is_final"):
                     break
             elif ftype == "agent_response":
@@ -245,11 +275,17 @@ class ElevenLabsTransport:
         if barged_at_ms is not None:
             # Audio that kept arriving after the interruption; 0 if it stopped dead.
             recovery_ms = round(max((last_audio_ms or barged_at_ms) - barged_at_ms, 0.0), 1)
+        if self.audio_dir and capture.total_bytes:
+            self._turn_index += 1
+            capture.write_wav(f"{self.audio_dir}/turn_{self._turn_index:02d}.wav")
+
         return AgentReply(
             text=" ".join(text_parts) or "(no agent text)",
             ttfa_ms=round(ttfa_ms or 0.0, 1),
             total_ms=round(total_ms, 1),
             recovery_ms=recovery_ms,
+            speech_ms=capture.speech_ms,
+            talkover_ms=capture.talkover_ms if barged_at_ms is not None else None,
         )
 
     # --- socket glue ----------------------------------------------------------
