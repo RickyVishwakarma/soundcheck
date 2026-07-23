@@ -55,6 +55,30 @@ def test_ping_is_answered_and_final_audio_ends_the_turn():
     assert reply.total_ms == 300.0          # is_final stops the turn immediately
 
 
+def test_keepalive_pings_do_not_prevent_end_of_turn():
+    """Regression: a live agent pings every ~2s, so recv() never idles out.
+
+    End-of-turn must be judged by time since the last *audio* frame; judging it
+    by socket silence hung the runner forever against a real agent.
+    """
+    pings = []
+    frames = [
+        {"type": "audio", "audio_event": {"audio_base_64": "aa"}},  # reply
+        {"type": "ping", "ping_event": {"event_id": 1}},            # keepalives
+        {"type": "ping", "ping_event": {"event_id": 2}},            # keep arriving
+        {"type": "ping", "ping_event": {"event_id": 3}},            # ...
+    ]
+    # audio at 1100, then pings at 2000/3000/4000; quiet_ms default is 2500,
+    # so the turn must end at 4000 (2900ms since audio) rather than loop.
+    times = [1000, 1100, 2000, 3000, 4000]
+    recv, now = _driver(frames, times)
+
+    reply = _transport()._consume_turn(recv, on_ping=pings.append, now_ms=now)
+
+    assert reply.ttfa_ms == 100.0
+    assert pings == [1, 2]          # ponged until the quiet threshold tripped
+
+
 def test_no_response_stops_at_turn_timeout():
     t = _transport()
     frames = [None, None, None]             # agent never emits audio

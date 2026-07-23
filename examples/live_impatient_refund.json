@@ -1,0 +1,49 @@
+{
+  "soundcheck_version": "0.2.0",
+  "persona": "impatient_refund",
+  "goal": "Get a refund for a cancelled service, while talking over the agent",
+  "generated_at": "2026-07-23T08:14:23+00:00",
+  "turns": [
+    {
+      "user": "Hi, I need a refund for the appointment you cancelled on me.",
+      "behavior": null,
+      "agent": "[warmly] Hello, thank you for calling our dental clinic! How can I help you book an appointment today? [briefly] I understand you're looking for a refund. I can't directly process refunds here, but I can connect you with someone who can help you with that. Would you like me to transfer you to our billing department?",
+      "ttfa_ms": 890.0,
+      "total_ms": 6812.0,
+      "recovery_ms": null
+    },
+    {
+      "user": "No listen, I don't want to rebook - I want my money back.",
+      "behavior": "interrupt",
+      "agent": "(no agent text)",
+      "ttfa_ms": 1735.0,
+      "total_ms": 2453.0,
+      "recovery_ms": 140.0
+    },
+    {
+      "user": "How long until it reaches my account?",
+      "behavior": null,
+      "agent": "[briefly] I... [briefly] I can't give you an exact timeframe for that, as I don't handle refunds directly. I can connect you with our billing department, who can provide you with that information. Would you like me to do that?",
+      "ttfa_ms": 2063.0,
+      "total_ms": 4781.0,
+      "recovery_ms": null
+    },
+    {
+      "user": "Fine. Please process the refund.",
+      "behavior": "interrupt",
+      "agent": "(no agent text)",
+      "ttfa_ms": 1438.0,
+      "total_ms": 2313.0,
+      "recovery_ms": 328.0
+    }
+  ],
+  "metrics": {
+    "turn_count": 4,
+    "ttfa_ms_p50": 1586.5,
+    "ttfa_ms_p95": 2063.0,
+    "turn_ms_p50": 3617.0,
+    "turn_ms_p95": 6812.0,
+    "recovery_ms_p95": 328.0,
+    "goal_completed": true
+  }
+}

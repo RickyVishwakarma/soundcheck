@@ -215,6 +215,14 @@ class ElevenLabsTransport:
                     break  # agent never responded
                 continue
 
+            # The server sends keepalive pings every ~2s, so recv() rarely
+            # idles out on a live socket. End-of-turn has to be judged by how
+            # long it has been since *audio*, not since any frame at all.
+            if last_audio_ms is not None and now - last_audio_ms >= self.quiet_ms:
+                break
+            if last_audio_ms is None and now - t0 >= self.turn_timeout_ms:
+                break
+
             ftype = frame.get("type")
             if ftype == "audio":
                 if ttfa_ms is None:

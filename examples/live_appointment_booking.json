@@ -1,0 +1,49 @@
+{
+  "soundcheck_version": "0.2.0",
+  "persona": "appointment_booking",
+  "goal": "Book a dental appointment for next Tuesday morning",
+  "generated_at": "2026-07-23T08:13:24+00:00",
+  "turns": [
+    {
+      "user": "Hi, I'd like to book an appointment.",
+      "behavior": null,
+      "agent": "[warmly] Hello, thank you for calling our dental clinic! How can I help you book an appointment today? [happy] Hello, thank you for calling! I can certainly help you with that. What day and time would be best for your appointment?",
+      "ttfa_ms": 625.0,
+      "total_ms": 5000.0,
+      "recovery_ms": null
+    },
+    {
+      "user": "Do you have anything next Tuesday morning?",
+      "behavior": null,
+      "agent": "[thoughtful] Let me check that for you. Could you please tell me your full name?",
+      "ttfa_ms": 5469.0,
+      "total_ms": 6453.0,
+      "recovery_ms": null
+    },
+    {
+      "user": "Actually, wait - how much does a cleaning cost?",
+      "behavior": "offtopic",
+      "agent": "A standard cleaning is one thousand five hundred rupees. Now, regarding your appointment for next Tuesday morning, could you please tell me your full name so I can book that for you?",
+      "ttfa_ms": 1422.0,
+      "total_ms": 3938.0,
+      "recovery_ms": null
+    },
+    {
+      "user": "Okay, Tuesday 10am works. My name is Ricky.",
+      "behavior": null,
+      "agent": "[happy] Alright, Ricky. You're booked for Tuesday at ten AM, confirmed.",
+      "ttfa_ms": 1344.0,
+      "total_ms": 2407.0,
+      "recovery_ms": null
+    }
+  ],
+  "metrics": {
+    "turn_count": 4,
+    "ttfa_ms_p50": 1383.0,
+    "ttfa_ms_p95": 5469.0,
+    "turn_ms_p50": 4469.0,
+    "turn_ms_p95": 6453.0,
+    "recovery_ms_p95": null,
+    "goal_completed": true
+  }
+}

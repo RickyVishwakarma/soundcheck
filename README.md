@@ -17,7 +17,28 @@ prompt that still books the appointment but adds 62% latency, blocked by the gat
 
 The offline pipeline (mock agent → scripted personas → metrics → regression gate)
 runs end-to-end with **zero API keys**, and the live ElevenLabs Agents transport
-is implemented — same personas, same metrics, real WebSocket.
+is **verified against a real agent** — same personas, same metrics, real WebSocket.
+
+### Verified live run
+
+Against a real ElevenLabs agent (a dental-clinic receptionist), the
+`appointment_booking` persona completed its goal — the agent replied
+*"Alright, Ricky. You're booked for Tuesday at ten AM, confirmed."*
+
+| Metric | Live agent | Note |
+|---|---:|---|
+| ttfa_ms_p50 | 1383 ms | |
+| ttfa_ms_p95 | **5469 ms** | one turn stalled 5.5s before speaking |
+| turn_ms_p95 | 6453 ms | |
+| goal_completed | ✅ true | |
+
+That p95 is the whole argument for this tool: the agent felt fine on three
+turns and hung for **five and a half seconds** on the fourth. A manual test
+would have hit the fast path and shipped it. Barge-in was verified live too —
+the agent kept talking **140 ms** and **328 ms** past the caller's interruption
+on the two `interrupt` turns.
+
+Raw reports: [`examples/`](examples/).
 
 - [x] Scripted caller personas (YAML)
 - [x] Metrics: TTFA, turn latency percentiles, goal completion
