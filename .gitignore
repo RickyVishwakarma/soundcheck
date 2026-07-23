@@ -11,3 +11,6 @@ report-ui/dist/
 *.egg-info/
 build/
 dist/
+
+server/soundcheck.db
+*.db
