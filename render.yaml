@@ -1,0 +1,18 @@
+# Render Blueprint — deploys the SoundCheck API.
+# Render → New → Blueprint → pick this repo. Everything below is applied
+# automatically; no dashboard fields to fill in.
+services:
+  - type: web
+    name: soundcheck-api
+    runtime: python
+    plan: free
+    # `live` brings websocket-client so users can point the hosted app at their
+    # own ElevenLabs agent; `server` brings FastAPI + uvicorn.
+    buildCommand: pip install -e ".[server,live]"
+    # Render injects $PORT — binding to a fixed port makes the service
+    # unreachable and the deploy times out waiting for an open socket.
+    startCommand: uvicorn server.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"

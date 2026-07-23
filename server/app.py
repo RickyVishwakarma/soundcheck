@@ -26,6 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from soundcheck import gate, runner
+from soundcheck import judge as judge_mod
 from soundcheck.personas import Persona, Turn
 from soundcheck.report import markdown_delta
 from soundcheck.session import ElevenLabsTransport, MockAgentTransport
@@ -125,7 +126,12 @@ def _execute(run_id: str, spec: PersonaSpec, req: RunRequest) -> None:
         else:
             transport = MockAgentTransport(latency_bias_ms=req.latency_bias_ms)
 
-        report = runner.run(_to_persona(spec), transport)
+        # Heuristic judge: deterministic and keyless, so the hosted demo shows
+        # quality scores without asking anyone for an Anthropic key.
+        persona = _to_persona(spec)
+        report = runner.run(
+            persona, transport, judge=judge_mod.build("heuristic", persona.success_any)
+        )
         # Auto-baseline: compare against the previous run of the same persona.
         baseline = store.latest_passed(spec.name, before_id=run_id)
         failures = gate.compare(baseline, report) if baseline else []
