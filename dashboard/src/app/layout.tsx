@@ -12,7 +12,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    // Signing in from the landing page should land on the dashboard, not back
+    // on marketing. "Fallback" because an explicit ?redirect_url still wins —
+    // that's how a deep link to /settings survives the sign-in detour.
+    <ClerkProvider
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+    >
       <html lang="en">
         <body className="min-h-screen">
           <ClerkTokenBridge />

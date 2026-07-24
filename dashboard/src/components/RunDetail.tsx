@@ -52,7 +52,7 @@ export function RunDetail({ id }: { id: string }) {
   return (
     <div className="space-y-8">
       <div>
-        <Link href="/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/dashboard" className="text-sm text-indigo-600 hover:underline">
           ← All runs
         </Link>
         <div className="mt-2 flex flex-wrap items-center gap-3">

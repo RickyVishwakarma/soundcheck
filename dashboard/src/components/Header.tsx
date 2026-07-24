@@ -14,11 +14,10 @@ export function Header() {
           <span aria-hidden>🔊</span> SoundCheck
         </Link>
         <nav className="flex items-center gap-5 text-sm text-slate-600 dark:text-slate-400">
-          <Link href="/" className="hover:text-indigo-600">
-            Dashboard
-          </Link>
-
           <Show when="signed-in">
+            <Link href="/dashboard" className="hover:text-indigo-600">
+              Dashboard
+            </Link>
             <Link href="/settings" className="hover:text-indigo-600">
               Settings
             </Link>
