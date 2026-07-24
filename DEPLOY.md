@@ -44,26 +44,49 @@ Notes on the free plan:
 1. [vercel.com/new](https://vercel.com/new) → import this repo
 2. **Root Directory: `dashboard`** — the repo root is a Python project, so this
    is required, not optional.
-3. Add an environment variable:
+3. Add three environment variables:
 
    | Name | Value |
    |---|---|
    | `NEXT_PUBLIC_API_URL` | the Render URL from step 1, no trailing slash |
+   | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_…` from `dashboard/.env.local` |
+   | `CLERK_SECRET_KEY` | `sk_…` from `dashboard/.env.local` |
 
 4. Deploy.
 
 > `NEXT_PUBLIC_*` variables are inlined **at build time**, not read at runtime.
-> If you change the API URL later you must redeploy, not just edit the variable.
+> Changing the API URL or publishable key later needs a redeploy, not just an
+> edit. `CLERK_SECRET_KEY` is server-side and must never be prefixed
+> `NEXT_PUBLIC_` — that would ship it to every browser.
+
+### About Clerk keys
+
+`dashboard/.env.local` holds **development** keys (`pk_test_…` / `sk_test_…`).
+They work on a deployed URL, but Clerk rate-limits development instances and
+shows a "development keys" banner — fine for a demo or a portfolio link.
+
+For a real production deployment, create a **production instance** in the
+[Clerk dashboard](https://dashboard.clerk.com/), which requires a domain you
+control (Clerk asks for DNS records; a `*.vercel.app` subdomain won't do). You
+then swap in the `pk_live_…` / `sk_live_…` keys on both Vercel *and* Render.
 
 ## 3. Verify
 
-Open the Vercel URL and click **Run test — no signup**. It should navigate to a
-run page, poll while the call runs, and land on a verdict. Then tick *"Simulate
-a degraded config"* and run again — the gate should fail on `ttfa_ms`.
+1. Open the Vercel URL — the **landing page** should render without signing in.
+2. Click **Get started** and create an account through Clerk.
+3. You should land on `/dashboard`. Click **Run test** → a run page appears,
+   polls, and settles on a verdict.
+4. Tick **Simulate a degraded config**, run again — the gate should fail on
+   `ttfa_ms`.
+5. Sign out and visit `/dashboard` directly — it must redirect you to sign-in.
 
-That path needs no API key: it drives the built-in deterministic mock agent.
-Testing a **real** ElevenLabs agent is opt-in per run, and the credentials are
-used for that request only — never written to the database or the logs.
+Step 3 needs no ElevenLabs key: it drives the built-in deterministic mock agent.
+Testing a **real** agent is opt-in per run, and those credentials are used for
+that request only — never written to the database or the logs.
+
+**If signing in works but the dashboard shows no data**, the API is missing
+`CLERK_PUBLISHABLE_KEY` — it can't verify your session and returns 401. Check
+`curl <api-url>/api/auth/me` reports `"clerk_configured": true`.
 
 ---
 
