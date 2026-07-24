@@ -17,7 +17,13 @@ dependencies = ["pyyaml>=6.0"]
 live = ["websocket-client>=1.7"]
 judge = ["anthropic>=0.116"]
 dev = ["pytest>=8.0", "httpx>=0.27"]
-server = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "websocket-client>=1.7"]
+server = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "websocket-client>=1.7",
+    # EmailStr validation on signup/login.
+    "pydantic[email]>=2.7",
+]
 
 [project.scripts]
 soundcheck = "soundcheck.cli:main"
