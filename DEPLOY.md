@@ -17,6 +17,11 @@ Deploy the API first; the dashboard needs its URL at build time.
    (`https://soundcheck-api-XXXX.onrender.com`).
 4. Sanity check: `curl <that-url>/api/health` → `{"ok":true,"version":"0.3.0"}`
 
+The blueprint sets `SOUNDCHECK_SECRET` (`generateValue: true`) — it signs
+session tokens and must stay stable across restarts, or everyone gets logged
+out on each deploy. If you ever run the API another way, set that env var
+yourself to a long random string.
+
 Notes on the free plan:
 
 - **It sleeps after ~15 minutes idle** and takes up to a minute to wake. The

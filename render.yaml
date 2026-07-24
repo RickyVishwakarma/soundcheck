@@ -16,3 +16,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12"
+      # Signs session tokens. Generated once by Render and kept stable, so a
+      # restart doesn't invalidate everyone's login (an unset value falls back
+      # to a per-process random key, which would).
+      - key: SOUNDCHECK_SECRET
+        generateValue: true
