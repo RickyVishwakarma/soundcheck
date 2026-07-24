@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, ms, type PersonaSummary, type Run } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { RunLauncher } from "./RunLauncher";
 import { StatusPill } from "./StatusPill";
+import { TrendChart } from "./TrendChart";
 
 type Phase = "loading" | "waking" | "ready" | "down";
 
@@ -15,6 +17,7 @@ type Phase = "loading" | "waking" | "ready" | "down";
  * immediately and honestly say "waking up" instead of "down".
  */
 export function Dashboard() {
+  const { email, ready } = useAuth();
   const [phase, setPhase] = useState<Phase>("loading");
   const [personas, setPersonas] = useState<PersonaSummary[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -37,11 +40,22 @@ export function Dashboard() {
     }
   }, []);
 
+  // Reload when auth resolves or changes — logging in swaps the tenant, so the
+  // run history must refetch for the newly-signed-in account.
   useEffect(() => {
-    load();
-  }, [load]);
+    if (ready) load();
+  }, [ready, email, load]);
 
   const failing = runs.filter((r) => r.status === "failed").length;
+  // Chart the scenario with the most history.
+  const trendPersona = (() => {
+    const counts = new Map<string, number>();
+    for (const r of runs) counts.set(r.persona, (counts.get(r.persona) ?? 0) + 1);
+    let best: string | null = null;
+    let n = 1;
+    for (const [p, c] of counts) if (c > n) [best, n] = [p, c];
+    return best;
+  })();
 
   return (
     <div className="space-y-8">
@@ -93,7 +107,19 @@ export function Dashboard() {
 
       {phase === "ready" ? (
         <>
+          {ready && !email ? (
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm dark:border-indigo-900 dark:bg-indigo-950/40">
+              You&apos;re using the shared public demo.{" "}
+              <Link href="/login" className="font-medium text-indigo-600 hover:underline">
+                Create an account
+              </Link>{" "}
+              to keep your runs private, save agents, and track drift over time.
+            </div>
+          ) : null}
+
           <RunLauncher personas={personas} />
+
+          {trendPersona ? <TrendChart persona={trendPersona} /> : null}
 
           <section>
             <div className="mb-3 flex items-baseline justify-between">

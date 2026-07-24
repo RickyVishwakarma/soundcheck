@@ -3,6 +3,19 @@
 export const API =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8077";
 
+const TOKEN_KEY = "soundcheck_token";
+
+export function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) window.localStorage.setItem(TOKEN_KEY, token);
+  else window.localStorage.removeItem(TOKEN_KEY);
+}
+
 export interface Metrics {
   turn_count: number;
   ttfa_ms_p50: number;
@@ -13,6 +26,9 @@ export interface Metrics {
   talkover_ms_p95: number | null;
   speech_ms_total: number | null;
   goal_completed: boolean | null;
+  hallucinated: boolean | null;
+  instruction_following: number | null;
+  tone: number | null;
 }
 
 export interface Turn {
@@ -55,20 +71,89 @@ export interface PersonaSummary {
   goal: string;
   turns: number;
   behaviors: string[];
+  source: "bundled" | "saved";
+  id?: string;
 }
 
-async function json<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-  return res.json() as Promise<T>;
+export interface SavedAgent {
+  id: string;
+  label: string;
+  agent_id: string;
+  created_at: string;
+}
+
+export interface TrendPoint {
+  id: string;
+  created_at: string;
+  status: RunStatus;
+  ttfa_ms_p95: number | null;
+  turn_ms_p95: number | null;
+  talkover_ms_p95: number | null;
+  goal_completed: boolean | null;
+}
+
+async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const res = await fetch(`${API}${path}`, {
+    ...init,
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers ?? {}),
+    },
+  });
+  if (res.status === 401) {
+    // A stale token means the session lapsed; clear it so the UI reflects that.
+    setToken(null);
+  }
+  if (!res.ok) {
+    let detail = `${res.status}`;
+    try {
+      detail = (await res.json()).detail ?? detail;
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new Error(detail);
+  }
+  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
 }
 
 export const api = {
-  personas: () => fetch(`${API}/api/personas`, { cache: "no-store" }).then(json<PersonaSummary[]>),
+  // auth
+  signup: (email: string, password: string) =>
+    req<{ token: string; email: string }>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  login: (email: string, password: string) =>
+    req<{ token: string; email: string }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  me: () => req<{ authenticated: boolean; email: string | null }>("/api/auth/me"),
 
-  runs: () => fetch(`${API}/api/runs`, { cache: "no-store" }).then(json<Run[]>),
+  // scenarios & agents
+  personas: () => req<PersonaSummary[]>("/api/personas"),
+  createScenario: (spec: object) =>
+    req<{ id: string; name: string }>("/api/scenarios", {
+      method: "POST",
+      body: JSON.stringify(spec),
+    }),
+  deleteScenario: (id: string) =>
+    req<void>(`/api/scenarios/${id}`, { method: "DELETE" }),
+  agents: () => req<SavedAgent[]>("/api/agents"),
+  createAgent: (label: string, agent_id: string) =>
+    req<SavedAgent>("/api/agents", {
+      method: "POST",
+      body: JSON.stringify({ label, agent_id }),
+    }),
+  deleteAgent: (id: string) => req<void>(`/api/agents/${id}`, { method: "DELETE" }),
 
-  run: (id: string) => fetch(`${API}/api/runs/${id}`, { cache: "no-store" }).then(json<Run>),
-
+  // runs & trends
+  runs: () => req<Run[]>("/api/runs"),
+  run: (id: string) => req<Run>(`/api/runs/${id}`),
+  trend: (persona: string) => req<TrendPoint[]>(`/api/trends/${persona}`),
   start: (body: {
     mode: "demo" | "live";
     persona_name?: string;
@@ -76,11 +161,10 @@ export const api = {
     api_key?: string;
     latency_bias_ms?: number;
   }) =>
-    fetch(`${API}/api/runs`, {
+    req<{ id: string; status: string }>("/api/runs", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    }).then(json<{ id: string; status: string }>),
+    }),
 };
 
 export const ms = (v: number | null | undefined) =>
