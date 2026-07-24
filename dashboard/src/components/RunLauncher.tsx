@@ -122,7 +122,7 @@ export function RunLauncher({ personas }: { personas: PersonaSummary[] }) {
         disabled={busy || (live && (!agentId.trim() || !apiKey.trim()))}
         className="mt-5 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
       >
-        {busy ? "Starting…" : live ? "Run against my agent" : "Run test — no signup"}
+        {busy ? "Starting…" : live ? "Run against my agent" : "Run test"}
       </button>
     </section>
   );

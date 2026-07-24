@@ -1,6 +1,6 @@
 "use client";
 
-import { SignUpButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, ms, type PersonaSummary, type Run } from "@/lib/api";
@@ -108,18 +108,6 @@ export function Dashboard() {
 
       {phase === "ready" ? (
         <>
-          {ready && !isSignedIn ? (
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm dark:border-indigo-900 dark:bg-indigo-950/40">
-              You&apos;re using the shared public demo.{" "}
-              <SignUpButton mode="modal">
-                <button className="font-medium text-indigo-600 hover:underline">
-                  Create an account
-                </button>
-              </SignUpButton>{" "}
-              to keep your runs private, save agents, and track drift over time.
-            </div>
-          ) : null}
-
           <RunLauncher personas={personas} />
 
           {trendPersona ? <TrendChart persona={trendPersona} /> : null}
