@@ -16,8 +16,9 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12"
-      # Signs session tokens. Generated once by Render and kept stable, so a
-      # restart doesn't invalidate everyone's login (an unset value falls back
-      # to a per-process random key, which would).
-      - key: SOUNDCHECK_SECRET
-        generateValue: true
+      # Clerk is the identity provider. The backend only *verifies* session
+      # tokens, and derives the JWKS URL from this key — so it needs the
+      # publishable key (not a secret), matching the dashboard's Clerk app.
+      # Set this in the Render dashboard after the first deploy.
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false

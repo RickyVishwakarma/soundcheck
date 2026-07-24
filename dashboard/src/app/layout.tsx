@@ -1,5 +1,6 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { AuthProvider } from "@/lib/auth";
+import { ClerkTokenBridge } from "@/components/ClerkTokenBridge";
 import { Header } from "@/components/Header";
 import "./globals.css";
 
@@ -11,17 +12,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen">
-        <AuthProvider>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="min-h-screen">
+          <ClerkTokenBridge />
           <Header />
           <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
           <footer className="mx-auto max-w-5xl px-6 pb-12 pt-6 text-sm text-slate-500">
             Open-source reliability gate for voice agents — runs in your CI, comments the
             delta on your PR.
           </footer>
-        </AuthProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

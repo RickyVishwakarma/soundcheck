@@ -26,3 +26,8 @@ dashboard/node_modules/
 /live_refund.json
 /suite.json
 *.tsbuildinfo
+
+# Clerk keys (CLERK_SECRET_KEY lives here) — never commit
+.env.local
+dashboard/.env.local
+.env*.local

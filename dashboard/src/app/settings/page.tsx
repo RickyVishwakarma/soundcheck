@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { api, type SavedAgent } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 
 export default function SettingsPage() {
-  const { email, ready } = useAuth();
+  const { user, isSignedIn, isLoaded } = useUser();
+  const ready = isLoaded;
+  const email = user?.primaryEmailAddress?.emailAddress ?? null;
   const [agents, setAgents] = useState<SavedAgent[]>([]);
   const [label, setLabel] = useState("");
   const [agentId, setAgentId] = useState("");
@@ -17,16 +18,18 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    if (ready && email) loadAgents();
-  }, [ready, email, loadAgents]);
+    if (ready && isSignedIn) loadAgents();
+  }, [ready, isSignedIn, loadAgents]);
 
-  if (ready && !email) {
+  if (ready && !isSignedIn) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm dark:border-slate-800 dark:bg-slate-900">
         <p className="font-medium">Settings need an account.</p>
-        <Link href="/login" className="mt-2 inline-block text-indigo-600 hover:underline">
-          Sign in →
-        </Link>
+        <SignInButton mode="modal">
+          <button className="mt-2 inline-block text-indigo-600 hover:underline">
+            Sign in →
+          </button>
+        </SignInButton>
       </div>
     );
   }

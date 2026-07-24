@@ -21,8 +21,8 @@ server = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "websocket-client>=1.7",
-    # EmailStr validation on signup/login.
-    "pydantic[email]>=2.7",
+    # Verifies Clerk's RS256 session tokens against its JWKS.
+    "pyjwt[crypto]>=2.9",
 ]
 
 [project.scripts]

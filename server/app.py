@@ -27,7 +27,7 @@ from typing import Literal, Optional
 import yaml
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 from soundcheck import gate, runner
 from soundcheck import judge as judge_mod
@@ -35,7 +35,7 @@ from soundcheck.personas import Persona, Turn
 from soundcheck.report import markdown_delta
 from soundcheck.session import ElevenLabsTransport, MockAgentTransport
 
-from . import auth, store
+from . import clerk_auth, store
 
 PERSONA_DIR = Path(__file__).resolve().parent.parent / "personas"
 
@@ -65,17 +65,18 @@ app.add_middleware(
 
 
 def current_owner(authorization: Optional[str] = Header(default=None)) -> str:
-    """Resolve the tenant for this request.
+    """Resolve the tenant for this request from the Clerk session token.
 
     No token means the shared public-demo tenant rather than a 401, so the
-    landing page works for a first-time visitor with no account.
+    landing page works for a first-time visitor with no account. When a token
+    *is* present it must verify — the Clerk user id becomes the tenant key.
     """
     if not authorization or not authorization.lower().startswith("bearer "):
         return store.DEMO_OWNER
-    claims = auth.read_token(authorization.split(" ", 1)[1].strip())
-    if not claims:
+    user_id = clerk_auth.verify_token(authorization.split(" ", 1)[1].strip())
+    if not user_id:
         raise HTTPException(401, "session expired or invalid — sign in again")
-    return claims["sub"]
+    return user_id
 
 
 def require_account(owner: str = Depends(current_owner)) -> str:
@@ -86,16 +87,6 @@ def require_account(owner: str = Depends(current_owner)) -> str:
 
 
 # --------------------------------------------------------------------- models
-
-
-class Credentials(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=200)
-
-
-class Session(BaseModel):
-    token: str
-    email: str
 
 
 class PersonaTurn(BaseModel):
@@ -192,39 +183,38 @@ def _execute(run_id: str, spec: PersonaSpec, req: RunRequest, owner: str) -> Non
 # ---------------------------------------------------------------------- routes
 
 
+@app.get("/")
+def root() -> dict:
+    """The API serves /api/* only — a bare 404 at the root is confusing when
+    someone opens this URL by mistake, so point them at the docs and health."""
+    return {
+        "service": "SoundCheck API",
+        "version": app.version,
+        "docs": "/docs",
+        "health": "/api/health",
+        "note": "This is the API. The web app is the dashboard, served separately.",
+    }
+
+
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True, "version": app.version}
 
 
 # --- auth -------------------------------------------------------------------
-
-
-@app.post("/api/auth/signup", response_model=Session, status_code=201)
-def signup(body: Credentials) -> Session:
-    user = store.create_user(body.email, auth.hash_password(body.password))
-    if user is None:
-        raise HTTPException(409, "that email already has an account")
-    return Session(token=auth.issue_token(user["id"], user["email"]), email=user["email"])
-
-
-@app.post("/api/auth/login", response_model=Session)
-def login(body: Credentials) -> Session:
-    user = store.get_user_by_email(body.email)
-    # Same message either way — distinguishing them tells an attacker which
-    # emails are registered.
-    if not user or not auth.verify_password(body.password, user["password_hash"]):
-        raise HTTPException(401, "wrong email or password")
-    return Session(token=auth.issue_token(user["id"], user["email"]), email=user["email"])
+# Sign-up, sign-in and session lifetime are Clerk's job. The backend only
+# verifies the token it is handed (see `current_owner`), so there are no
+# credential endpoints here — nothing to attack, and no password to store.
 
 
 @app.get("/api/auth/me")
-def me(authorization: Optional[str] = Header(default=None)) -> dict:
-    owner = current_owner(authorization)
-    if owner == store.DEMO_OWNER:
-        return {"authenticated": False, "email": None}
-    claims = auth.read_token(authorization.split(" ", 1)[1].strip())
-    return {"authenticated": True, "email": (claims or {}).get("email")}
+def me(owner: str = Depends(current_owner)) -> dict:
+    """Whether this request is an authenticated tenant or the public demo."""
+    return {
+        "authenticated": owner != store.DEMO_OWNER,
+        "owner": None if owner == store.DEMO_OWNER else owner,
+        "clerk_configured": clerk_auth.is_configured(),
+    }
 
 
 # --- scenarios --------------------------------------------------------------

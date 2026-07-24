@@ -25,14 +25,9 @@ _lock = threading.Lock()
 # without an account and never sees another tenant's data.
 DEMO_OWNER = "demo"
 
+# No users table: Clerk is the identity provider. `owner` here is the Clerk
+# user id (or DEMO_OWNER), so this database never stores an email or password.
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS users (
-    id            TEXT PRIMARY KEY,
-    email         TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at    TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS runs (
     id           TEXT PRIMARY KEY,
     owner        TEXT NOT NULL DEFAULT 'demo',
@@ -88,31 +83,6 @@ def _now() -> str:
 
 def _uid(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
-
-
-# ----------------------------------------------------------------------- users
-
-
-def create_user(email: str, password_hash: str) -> Optional[dict]:
-    """None when the email is taken — the caller turns that into a 409."""
-    user_id = _uid("usr")
-    try:
-        with _lock, _conn() as c:
-            c.execute(
-                "INSERT INTO users (id, email, password_hash, created_at) VALUES (?,?,?,?)",
-                (user_id, email.lower().strip(), password_hash, _now()),
-            )
-    except sqlite3.IntegrityError:
-        return None
-    return {"id": user_id, "email": email.lower().strip()}
-
-
-def get_user_by_email(email: str) -> Optional[dict]:
-    with _lock, _conn() as c:
-        r = c.execute(
-            "SELECT * FROM users WHERE email=?", (email.lower().strip(),)
-        ).fetchone()
-    return dict(r) if r else None
 
 
 # ------------------------------------------------------------------------ runs

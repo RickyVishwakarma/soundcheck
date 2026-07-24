@@ -15,12 +15,19 @@ Deploy the API first; the dashboard needs its URL at build time.
    fields to fill in.
 3. Wait for the first deploy, then copy the service URL
    (`https://soundcheck-api-XXXX.onrender.com`).
-4. Sanity check: `curl <that-url>/api/health` → `{"ok":true,"version":"0.3.0"}`
+4. Sanity check: `curl <that-url>/api/health` → `{"ok":true,"version":"0.4.0"}`
+5. In the service's **Environment** tab, set `CLERK_PUBLISHABLE_KEY` to the same
+   `pk_…` key the dashboard uses.
 
-The blueprint sets `SOUNDCHECK_SECRET` (`generateValue: true`) — it signs
-session tokens and must stay stable across restarts, or everyone gets logged
-out on each deploy. If you ever run the API another way, set that env var
-yourself to a long random string.
+**Why the backend needs a Clerk key.** Clerk owns sign-in on the frontend and
+issues session tokens; the API only *verifies* them, and it finds Clerk's
+public keys (JWKS) by decoding the publishable key. Without it the API can't
+verify anyone and every signed-in request gets a 401 — the public demo still
+works, but accounts don't. It is a *publishable* key, not a secret; the Clerk
+secret key never goes near the backend.
+
+Check it took effect: `curl <that-url>/api/auth/me` →
+`{"authenticated":false,...,"clerk_configured":true}`.
 
 Notes on the free plan:
 

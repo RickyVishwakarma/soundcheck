@@ -3,17 +3,13 @@
 export const API =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://127.0.0.1:8077";
 
-const TOKEN_KEY = "soundcheck_token";
+// Clerk hands out session tokens through an async hook, but this module is
+// framework-agnostic. A top-level component registers Clerk's getToken here,
+// so api calls can attach the current token without importing React.
+let tokenGetter: (() => Promise<string | null>) | null = null;
 
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(TOKEN_KEY);
-}
-
-export function setToken(token: string | null): void {
-  if (typeof window === "undefined") return;
-  if (token) window.localStorage.setItem(TOKEN_KEY, token);
-  else window.localStorage.removeItem(TOKEN_KEY);
+export function setTokenGetter(fn: (() => Promise<string | null>) | null): void {
+  tokenGetter = fn;
 }
 
 export interface Metrics {
@@ -93,7 +89,7 @@ export interface TrendPoint {
 }
 
 async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
+  const token = tokenGetter ? await tokenGetter() : null;
   const res = await fetch(`${API}${path}`, {
     ...init,
     cache: "no-store",
@@ -103,10 +99,6 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...(init.headers ?? {}),
     },
   });
-  if (res.status === 401) {
-    // A stale token means the session lapsed; clear it so the UI reflects that.
-    setToken(null);
-  }
   if (!res.ok) {
     let detail = `${res.status}`;
     try {
@@ -120,18 +112,8 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  // auth
-  signup: (email: string, password: string) =>
-    req<{ token: string; email: string }>("/api/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
-  login: (email: string, password: string) =>
-    req<{ token: string; email: string }>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
-  me: () => req<{ authenticated: boolean; email: string | null }>("/api/auth/me"),
+  // Auth is handled by Clerk on the frontend; the backend verifies Clerk's
+  // session token, so there are no signup/login endpoints here anymore.
 
   // scenarios & agents
   personas: () => req<PersonaSummary[]>("/api/personas"),
